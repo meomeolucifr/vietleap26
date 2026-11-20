@@ -256,7 +256,6 @@
         <div>
           <div class="bp-big"><input id="bp" type="number" min="0" max="500" step="1" value="25">
             <span class="unit" id="bp-unit"></span><span class="eq num" id="bp-pct"></span></div>
-          <div class="hint" data-t="bpHint"></div>
         </div>
         <div class="slider-row">
           <input id="bpRange" type="range" min="0" max="300" step="1" value="25">
@@ -394,11 +393,11 @@
   const T = {
     nav: ['Điều hướng', 'Navigation'],
     tabSim: ['Mô phỏng', 'Simulator'], tabMet: ['Phương pháp & dữ liệu', 'Method & data'],
-    brief: ['Cho ALCO/CFO ngân hàng: giảm lãi suất cho vay bao nhiêu mà vẫn giữ được lợi nhuận, an toàn vốn và đệm dự phòng? So sánh với {n} ngân hàng thương mại niêm yết, {y}.',
-            'For a bank\'s ALCO/CFO: how far can lending rates be cut while keeping profit, capital and provisioning buffers? Benchmarked against {n} listed commercial banks, {y}.'],
+    brief: ['Dành cho ALCO/CFO: giảm lãi suất cho vay bao nhiêu thì ngân hàng vẫn giữ được lợi nhuận, an toàn vốn và đệm dự phòng?',
+            'For a bank\'s ALCO/CFO: how far can lending rates be cut while the bank keeps its profit, capital and provisioning buffers?'],
     mdTitle: ['Mô hình đề xuất: công thức kế toán + kinh tế lượng', 'Proposed model: accounting formulas + econometrics'],
-    mdDesc: ['Tầng 1 tính tác động bằng công thức trên báo cáo tài chính. Tầng 2 dùng hồi quy panel trên mẫu để ước lượng các tham số mà tầng 1 không tự biết. Mỗi dòng là một mắt xích từ mức giảm lãi đến chỉ số an toàn.',
-             'Layer 1 computes the impact with formulas on the financial statements. Layer 2 uses panel regressions on the sample to estimate the parameters layer 1 cannot know by itself. Each row is one link from the rate cut to a safety indicator.'],
+    mdDesc: ['Mô phỏng tính tác động bằng công thức trên báo cáo tài chính của ngân hàng. Những gì một năm báo cáo không cho biết, như phần chi phí vốn được bù lại hay dự phòng tăng khi kinh tế xấu đi, được ước lượng bằng hồi quy trên {n} ngân hàng × 10 năm.',
+             'The simulator computes the impact with formulas on the bank\'s own statements. What a single year cannot tell, such as how much funding cost offsets the cut or how provisions rise in a downturn, is estimated by regressions on {n} banks × 10 years.'],
     varTitle: ['Biến, công thức và nguồn dữ liệu', 'Variables, formulas and data sources'],
     bank: ['Ngân hàng', 'Bank'], year: ['Năm nền', 'Base year'],
     bpHint: ['Mức giảm lãi suất cho vay, tính bằng điểm cơ bản: 10 bp = 0,1 điểm %', 'Lending-rate cut in basis points: 10 bp = 0.1 percentage point'],
@@ -475,8 +474,9 @@
        L('Kênh NIM theo vĩ mô', 'Macro-to-NIM channel'), L('<code>nim_macro</code>: không hệ số vĩ mô nào có ý nghĩa ở 5%', '<code>nim_macro</code>: no macro coefficient significant at 5%'),
        L('Không thêm kênh này, tránh tính trùng', 'Channel not added; avoids double counting')],
     ];
-    $('tbl-model').innerHTML = `<thead><tr><th>${L('Mắt xích', 'Link')}</th><th>${L('Tầng 1: công thức', 'Layer 1: formula')}</th><th>${L('Tham số cần biết', 'Parameter needed')}</th><th>${L('Tầng 2: mô hình và kết quả', 'Layer 2: model and result')}</th><th>${L('Ý nghĩa cho chỉ số an toàn', 'What it means for the safety indicators')}</th></tr></thead><tbody>` +
-      rows.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join('')}</tr>`).join('') + '</tbody>';
+    // công thức và tham số của từng mắt xích đã có ở bảng "Công thức" bên dưới; ở đây chỉ giữ mắt xích, kết quả, ý nghĩa
+    $('tbl-model').innerHTML = `<thead><tr><th>${L('Mắt xích', 'Link')}</th><th>${L('Mô hình và kết quả', 'Model and result')}</th><th>${L('Ý nghĩa cho chỉ số an toàn', 'What it means for the safety indicators')}</th></tr></thead><tbody>` +
+      rows.map(r => `<tr><td>${r[0]}</td><td>${r[3]}</td><td>${r[4]}</td></tr>`).join('') + '</tbody>';
   }
 
   // ---------- biến: công thức, dòng báo cáo tài chính, nơi lấy ----------
@@ -611,10 +611,10 @@
     else t = L(`${r.bank} giảm được tối đa ${f0.format(Math.floor(s.maxBp))} bp mà vẫn giữ ${q}% lợi nhuận`, `${r.bank} can cut lending rates by up to ${f0.format(Math.floor(s.maxBp))} bp and keep ${q}% of profit`);
     $('title').textContent = t;
     const chg = r.pat > 0 ? (s.patChg < 0 ? L('giảm ', 'falls ') : L('tăng ', 'rises ')) + pct(Math.abs(s.patChg)) : L('đổi ', 'changes by ') + sTy(s.pat1 - r.pat) + ' ' + BN();
-    $('subtitle').textContent = L(`Ở mức ${f0.format(S.bp)} bp, người vay tiết kiệm ${ty(s.save)} tỷ đồng trong 12 tháng, LNST ${chg}`,
-                                  `At ${f0.format(S.bp)} bp, borrowers save VND ${ty(s.save)} bn over 12 months; profit after tax ${chg}`) +
-      (s.dProv ? L(` (gồm ${sTy(-s.dProvAT)} tỷ do kịch bản vĩ mô ${scLabel(scen(S.macro)).toLowerCase()})`, ` (incl. ${sTy(-s.dProvAT)} bn from the ${scLabel(scen(S.macro)).toLowerCase()} macro scenario)`) : '') +
-      L(`. Chi phí vốn bù lại ${pct(S.phi, 0)}. Nền: báo cáo tài chính hợp nhất ${r.year}, đơn vị tỷ VND.`, `. Funding cost offset ${pct(S.phi, 0)}. Base: ${r.year} consolidated financial statements, VND bn.`);
+    $('subtitle').textContent = L(`Ở mức ${f0.format(S.bp)} bp, người vay tiết kiệm ${ty(s.save)} tỷ đồng mỗi năm, còn lợi nhuận sau thuế ${chg}`,
+                                  `At ${f0.format(S.bp)} bp, borrowers save VND ${ty(s.save)} bn a year and profit after tax ${chg}`) +
+      (s.dProv ? L(` (đã tính kịch bản vĩ mô ${scLabel(scen(S.macro)).toLowerCase()})`, ` (including the ${scLabel(scen(S.macro)).toLowerCase()} macro scenario)`) : '') +
+      L(`. Tính trên báo cáo tài chính hợp nhất ${r.year}.`, `. Based on the ${r.year} consolidated financial statements.`);
   }
 
   // ---------- KPI ----------
@@ -623,8 +623,8 @@
       <div class="k-top"><span class="k-label">${L('Người vay tiết kiệm', 'Borrower savings')}</span><span class="tag num">${L('12 tháng', '12 months')}</span></div>
       <div class="k-value">${ty(s.save)} <small>${BNL()}</small></div>
       <div class="k-sub">${L(`${f2.format(s.perBillion)} triệu đồng/năm cho mỗi 1 tỷ đồng dư nợ được giảm lãi`, `VND ${f2.format(s.perBillion)} million a year for every VND 1 bn of loans repriced`)}</div>
-      <div class="k-sub" style="margin-top:10px">${L(`Bằng <b style="color:#fff">${pct(s.save / r.ii)}</b> thu nhập lãi năm nền của ${r.bank}, trên dư nợ hiệu lực ${ty(s.E)} tỷ`,
-                                                     `Equal to <b style="color:#fff">${pct(s.save / r.ii)}</b> of ${r.bank}'s base-year interest income, on effective loans of VND ${ty(s.E)} bn`)}</div>
+      <div class="k-sub" style="margin-top:10px">${L(`Tương đương <b style="color:#fff">${pct(s.save / r.ii)}</b> thu nhập lãi năm ${r.year} của ${r.bank}`,
+                                                     `Equal to <b style="color:#fff">${pct(s.save / r.ii)}</b> of ${r.bank}'s ${r.year} interest income`)}</div>
       <div class="k-foot">${fx(L(`<b>Tiết kiệm = Dư nợ hiệu lực × s</b><br>Dư nợ hiệu lực = ${ty(r.loans)} × ${f0.format(S.alpha * 100)}% × ${f1.format(S.months)}/12 = ${ty(s.E)} tỷ<br>× ${f2.format(S.bp / 100)}% = <b>${ty(s.save)} tỷ</b>`,
                                  `<b>Savings = effective loans × s</b><br>Effective loans = ${ty(r.loans)} × ${f0.format(S.alpha * 100)}% × ${f1.format(S.months)}/12 = ${ty(s.E)} bn<br>× ${f2.format(S.bp / 100)}% = <b>${ty(s.save)} bn</b>`))}</div>`;
 
@@ -647,7 +647,7 @@
     $('kpi-cov').innerHTML = `
       <div class="k-top"><span class="k-label">${term('cov')}</span>${covB}</div>
       <div class="k-value">${times(s.cov1)}</div>
-      <div class="k-sub">${L(`Nền ${times(s.cov0)}. Còn trích thêm được <b>${ty(s.buffer)}</b> tỷ dự phòng trước khi LNTT về 0`, `Base ${times(s.cov0)}. Room for <b>${ty(s.buffer)}</b> bn more provisions before pre-tax profit hits zero`)}</div>
+      <div class="k-sub">${L(`Năm nền ${times(s.cov0)}. Lợi nhuận còn gánh thêm được <b>${ty(s.buffer)}</b> tỷ dự phòng trước khi chuyển sang lỗ`, `Base year ${times(s.cov0)}. Profit can absorb <b>${ty(s.buffer)}</b> bn more provisions before turning into a loss`)}</div>
       <div class="k-foot">${fx(L(`<b>(LN trước dự phòng − ΔLNTT do giảm lãi) / Chi phí dự phòng</b><br>= (${ty(r.ppop)} − ${ty(s.dPBT)}) / ${ty(s.prov1)} = <b>${times(s.cov1)}</b>`,
                                  `<b>(Pre-provision profit − ΔPBT from the cut) / provisions</b><br>= (${ty(r.ppop)} − ${ty(s.dPBT)}) / ${ty(s.prov1)} = <b>${times(s.cov1)}</b>`) +
         (s.dProv ? L(`<br>Chi phí dự phòng = nền ${ty(r.prov)} ${sTy(s.dProv)} theo kịch bản vĩ mô`, `<br>Provisions = base ${ty(r.prov)} ${sTy(s.dProv)} from the macro scenario`) : '') +
@@ -684,8 +684,8 @@
   // ---------- độ nhạy ----------
   function drawSens(r, s) {
     const el = $('chart-sens'), w = W(el), h = Math.round(Math.max(280, Math.min(360, w * 0.24))), m = { t: 20, r: 80, b: 40, l: 48 };
-    $('sens-desc').textContent = L(`% LNST ${r.bank} giữ lại theo mức giảm. Vùng tô là các mức vẫn đạt mục tiêu.`, `Share of ${r.bank}'s profit kept at each cut. The shaded zone meets the target.`) +
-      (s.beBp ? L(` LNTT về 0 ở ${f0.format(s.beBp)} bp.`, ` Pre-tax profit reaches zero at ${f0.format(s.beBp)} bp.`) : '');
+    $('sens-desc').textContent = L(`Phần lợi nhuận ${r.bank} giữ lại ở từng mức giảm; vùng xanh là các mức vẫn đạt mục tiêu.`, `Share of ${r.bank}'s profit kept at each cut; the green zone still meets the target.`) +
+      (s.beBp ? L(` Giảm tới ${f0.format(s.beBp)} bp thì ngân hàng hết lãi.`, ` At ${f0.format(s.beBp)} bp the bank stops making a profit.`) : '');
     if (!(r.pat > 0)) { el.innerHTML = `<p class="desc">${L('LNST năm nền ≤ 0 nên không tính được tỷ lệ giữ lại. Chọn năm hoặc ngân hàng khác.', 'Base-year profit ≤ 0, so retention cannot be computed. Pick another year or bank.')}</p>`; return; }
     const xmax = Math.max(200, Math.ceil(S.bp * 1.4 / 50) * 50, s.maxBp ? Math.min(500, Math.ceil(s.maxBp * 1.3 / 50) * 50) : 0);
     const pts = []; for (let i = 0; i <= 120; i++) { const b = xmax * i / 120; pts.push([b, sim(r, b).retain]); }
@@ -731,10 +731,10 @@
 
   // ---------- so sánh ngân hàng ----------
   const CMP = {
-    pat: { t: () => L('Ngân hàng nào mất nhiều lợi nhuận nhất?', 'Which banks lose the most profit?'), get: s => s.patChg, fmt: v => sPct(v), asc: true, d: () => L('Δ LNST ở cùng mức giảm. Âm hơn = nhạy hơn.', 'Δ PAT at the same cut. More negative = more sensitive.') },
-    max: { t: () => L('Ngân hàng nào còn nhiều dư địa giảm lãi?', 'Which banks have the most room to cut?'), get: s => s.maxBp, fmt: v => f1.format(v) + ' bp', asc: false, d: () => L('Mức giảm tối đa vẫn giữ mục tiêu LNST.', 'Largest cut that still meets the profit target.') },
-    cov: { t: () => L('Ai còn dày đệm trang trải dự phòng?', 'Who keeps the thickest provision buffer?'), get: s => s.cov1, fmt: v => times(v), asc: false, d: () => L('LN trước dự phòng sau giảm lãi / chi phí dự phòng.', 'Pre-provision profit after the cut / provisions.') },
-    car: { t: () => L('CAR sau giảm lãi ở từng ngân hàng', 'CAR after the cut, by bank'), get: s => s.car1, fmt: v => pct(v, 2), asc: false, d: () => L('Vạch đỏ là mức tối thiểu 8%. * là CAR ước tính.', 'Red line is the 8% minimum. * = estimated CAR.') },
+    pat: { t: () => L('Ngân hàng nào mất nhiều lợi nhuận nhất?', 'Which banks lose the most profit?'), get: s => s.patChg, fmt: v => sPct(v), asc: true, d: () => L('Thanh càng dài, ngân hàng càng mất nhiều lợi nhuận ở cùng mức giảm.', 'The longer the bar, the more profit the bank loses at the same cut.') },
+    max: { t: () => L('Ngân hàng nào còn nhiều dư địa giảm lãi?', 'Which banks have the most room to cut?'), get: s => s.maxBp, fmt: v => f1.format(v) + ' bp', asc: false, d: () => L('Mức giảm lớn nhất mà mỗi ngân hàng vẫn giữ được mục tiêu lợi nhuận.', 'The largest cut each bank can make and still meet the profit target.') },
+    cov: { t: () => L('Ai còn dày đệm trang trải dự phòng?', 'Who keeps the thickest provision buffer?'), get: s => s.cov1, fmt: v => times(v), asc: false, d: () => L('Lợi nhuận trước dự phòng sau khi giảm lãi gấp bao nhiêu lần chi phí dự phòng.', 'How many times pre-provision profit after the cut covers provisions.') },
+    car: { t: () => L('CAR sau giảm lãi ở từng ngân hàng', 'CAR after the cut, by bank'), get: s => s.car1, fmt: v => pct(v, 2), asc: false, d: () => L('Vạch đỏ là mức tối thiểu 8%; dấu * là CAR ước tính.', 'The red line is the 8% minimum; * marks an estimated CAR.') },
   };
   const bindBanks = el => el.querySelectorAll('[data-bank]').forEach(n => {
     const go = () => { S.bank = n.dataset.bank; syncYear(); render(); };
@@ -753,7 +753,7 @@
     });
     items.sort((a, c) => cfg.asc ? a.v - c.v : c.v - a.v);
     $('cmp-title').textContent = cfg.t();
-    $('cmp-desc').textContent = `${cfg.d()} ${L('Năm', 'Year')} ${S.year}, ${f0.format(S.bp)} bp.` + (skip.length ? L(` Không có: ${skip.join(', ')}.`, ` Not available: ${skip.join(', ')}.`) : '');
+    $('cmp-desc').textContent = `${cfg.d()} ${L('Năm', 'Year')} ${S.year}, ${f0.format(S.bp)} bp.` + (skip.length ? L(` Thiếu số liệu: ${skip.join(', ')}.`, ` No data: ${skip.join(', ')}.`) : '');
     const rh = 22, m = { t: 4, r: 64, b: 4, l: 92 }, w = W(el), h = m.t + m.b + items.length * rh;
     const sv = items.map(i => i.v).sort((a, c) => a - c), qt = p => sv[Math.floor(p * (sv.length - 1))] ?? 0;
     const span = Math.max(Math.abs(qt(0.1)), Math.abs(qt(0.9))) * 1.6 || 1;
@@ -774,7 +774,7 @@
     });
     if (S.cmp === 'car') g += `<line x1="${x(CAR_MIN)}" x2="${x(CAR_MIN)}" y1="0" y2="${h}" stroke="var(--crit)" stroke-width="1.5" stroke-dasharray="4 3"/>`;
     el.innerHTML = `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${esc(cfg.t())}">${g}</svg>` +
-      (thin.length ? `<p class="desc" style="margin-top:8px">${L(`Lãi quá mỏng, mất hơn 100% LNST nên không vẽ (% không còn ý nghĩa so sánh): ${thin.join(', ')}.`, `Profit too thin to compare, losing more than 100% of PAT (not drawn): ${thin.join(', ')}.`)}</p>` : '') +
+      (thin.length ? `<p class="desc" style="margin-top:8px">${L(`Không vẽ vì lãi quá mỏng, mất hơn toàn bộ lợi nhuận: ${thin.join(', ')}.`, `Not drawn because profit is too thin (it loses more than all of it): ${thin.join(', ')}.`)}</p>` : '') +
       `<p class="desc" style="margin-top:8px">${L('Bấm vào một ngân hàng để xem chi tiết.', 'Click a bank for details.')}</p>`;
     bindBanks(el);
   }
@@ -782,21 +782,21 @@
   function drawScen(r) {
     $('scen-title').textContent = L('Các mức giảm thường được cân nhắc', 'Commonly considered cuts');
     const sc = scen(S.macro);
-    $('scen-desc').textContent = L(`Cùng giả định${sc ? ` và kịch bản vĩ mô ${scLabel(sc).toLowerCase()}` : ''}, chỉ đổi mức giảm. Dòng tô màu là mức đang chọn.`,
-                                   `Same assumptions${sc ? ` and ${scLabel(sc).toLowerCase()} macro scenario` : ''}; only the cut changes. Highlighted row = current cut.`);
+    $('scen-desc').textContent = L(`Giữ nguyên các giả định ở trên${sc ? ` và kịch bản ${scLabel(sc).toLowerCase()}` : ''}, chỉ thay mức giảm.`,
+                                   `Same assumptions as above${sc ? ` and the ${scLabel(sc).toLowerCase()} scenario` : ''}; only the cut changes.`);
     const list = [...new Set([0, 10, 25, 50, 100, S.bp])].sort((a, c) => a - c);
-    $('tbl-scen').innerHTML = `<thead><tr><th>${L('Mức giảm', 'Cut')}</th><th>${L('Người vay tiết kiệm', 'Borrower savings')}</th><th>${L('LNST mới', 'New PAT')}</th><th>${L('Δ LNST', 'Δ PAT')}</th><th>${term('nim')}</th><th>${L('Trang trải DP', 'Coverage')}</th><th>CAR</th></tr></thead><tbody>` +
+    $('tbl-scen').innerHTML = `<thead><tr><th>${L('Mức giảm', 'Cut')}</th><th>${L('Người vay tiết kiệm', 'Borrower savings')}</th><th>${L('LNST mới', 'New PAT')}</th><th>${L('Δ LNST', 'Δ PAT')}</th><th>${L('Trang trải DP', 'Coverage')}</th><th>CAR</th></tr></thead><tbody>` +
       list.map(b => { const s = sim(r, b);
         return `<tr class="${b === S.bp ? 'current' : ''}"><td>${f0.format(b)} bp</td><td>${ty(s.save)}</td><td>${ty(s.pat1)}</td><td>${s.patChg == null ? '–' : sPct(s.patChg)}</td>
-          <td>${pct(s.nii1 / r.ta, 2)}</td><td>${times(s.cov1)}</td><td>${s.cap ? pct(s.car1, 2) : '–'}</td></tr>`; }).join('') +
+          <td>${times(s.cov1)}</td><td>${s.cap ? pct(s.car1, 2) : '–'}</td></tr>`; }).join('') +
       `</tbody>`;
   }
 
   // ma trận kịch bản: hàng = kịch bản vĩ mô, cột = mức giảm; bấm ô để chọn cả hai
   function drawMatrix(r) {
     const cols = [...new Set([0, 25, 50, S.bp])].sort((a, c) => a - c);
-    $('mx-desc').textContent = L(`Mỗi ô: % LNST giữ lại so với năm nền ${r.year}, kèm CAR và khả năng trang trải dự phòng. Ô tô màu là lựa chọn hiện tại; bấm một ô để chọn.`,
-                                 `Each cell: % of ${r.year} profit kept, with CAR and provision coverage. Highlighted = current choice; click a cell to select it.`);
+    $('mx-desc').textContent = L(`Mỗi ô là phần lợi nhuận giữ lại (✓ là đạt mục tiêu), kèm CAR và khả năng trang trải dự phòng. Bấm vào ô để chọn tổ hợp đó.`,
+                                 `Each cell shows the profit kept (✓ meets the target), with CAR and provision coverage. Click a cell to select it.`);
     const mark = s => s.retain == null ? '' : s.retain >= S.q ? '✓ ' : '! ';
     $('tbl-matrix').innerHTML = `<thead><tr><th>${L('Kịch bản vĩ mô', 'Macro scenario')}</th>${cols.map(b => `<th style="text-align:center">${f0.format(b)} bp</th>`).join('')}</tr></thead><tbody>` +
       ECON.scenarios.map(sc => `<tr><td><b>${esc(scLabel(sc))}</b><div class="m2" style="color:var(--muted);font-size:11.5px">${sc.dllp ? L(`Chi phí DP ${sNum(sc.dllp * 1e4)} bp dư nợ`, `Provisions ${sNum(sc.dllp * 1e4)} bp of loans`) : L('Như năm nền', 'As base year')}</div></td>` +
@@ -813,9 +813,9 @@
     if (!has) return;
     $('macro-seg').innerHTML = ECON.scenarios.map(sc => `<button data-macro="${sc.id}" aria-pressed="${sc.id === S.macro}">${esc(scLabel(sc))}</button>`).join('');
     const sc = ECON.scenarios.find(x => x.id === S.macro);
-    const sh = sc && sc.shocks.gdp_growth != null ? ` (GDP ${sNum(sc.shocks.gdp_growth * 100)} ${L('điểm %', 'pp')})` : '';
-    $('macro-hint').textContent = sc ? `${LX(sc, 'desc')}${sh}.` + (sc.dllp ? L(` Theo mô hình panel, chi phí dự phòng ${sc.dllp > 0 ? 'tăng' : 'giảm'} ${f1.format(Math.abs(sc.dllp * 1e4))} bp trên dư nợ.`,
-                                                                                  ` Per the panel model, provisions ${sc.dllp > 0 ? 'rise' : 'fall'} by ${f1.format(Math.abs(sc.dllp * 1e4))} bp of loans.`) : '') : '';
+    $('macro-hint').textContent = !sc ? '' : !sc.dllp ? `${LX(sc, 'desc')}.`
+      : LX(sc, 'desc') + L(`, chi phí dự phòng ${sc.dllp > 0 ? 'tăng' : 'giảm'} ${f1.format(Math.abs(sc.dllp * 1e4))} bp trên dư nợ.`,
+                           `; provisions ${sc.dllp > 0 ? 'rise' : 'fall'} by ${f1.format(Math.abs(sc.dllp * 1e4))} bp of loans.`);
   }
 
   // ================== PHƯƠNG PHÁP ==================
