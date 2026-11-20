@@ -179,6 +179,7 @@
   table.model-tbl td:first-child { font-weight: 600; min-width: 150px; }
   table.model-tbl code { font-size: 11.5px; background: var(--card-2); border-radius: 5px; padding: 1px 5px; }
   table.model-tbl .grp td { background: var(--card-2); font-weight: 600; color: var(--ink-2); font-size: 12px; }
+  .cmp-take { margin: 0 0 12px; font-size: 13.5px; font-weight: 500; color: var(--ink); max-width: 760px; }
   .pagehead .brief { font-size: 13px; color: var(--accent); font-weight: 600; margin: 0 0 6px; max-width: 900px; }
   .term { border-bottom: 1px dotted currentColor; cursor: help; }
   .presets { display: flex; gap: 4px; margin-top: 6px; flex-wrap: wrap; }
@@ -768,8 +769,51 @@
     const go = () => { S.bank = n.dataset.bank; syncYear(); render(); };
     n.addEventListener('click', go); n.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
   });
+  // ngưỡng để người xem biết thanh nào "có vấn đề": mỗi chỉ tiêu một mốc so sánh, kèm trạng thái đạt/không đạt
+  function cmpRefs() {
+    const lossMax = -(1 - S.q);
+    return {
+      pat: { refs: [{ v: lossMax, c: 'var(--crit)', label: L(`Mất ${pct(1 - S.q, 0)} (mục tiêu)`, `${pct(1 - S.q, 0)} loss (target)`) }],
+             status: v => v < lossMax ? 'crit' : 'ok' },
+      max: { refs: [{ v: S.bp, c: 'var(--accent)', label: L(`Mức đang xét ${f0.format(S.bp)} bp`, `Cut under review ${f0.format(S.bp)} bp`) }],
+             status: v => v < S.bp ? 'crit' : 'ok' },
+      cov: { refs: [{ v: 1, c: 'var(--crit)', label: L('1 lần', '1×') }, { v: 2, c: 'var(--warn)', label: L('2 lần', '2×') }],
+             status: v => v < 1 ? 'crit' : v < 2 ? 'warn' : 'ok' },
+      car: { refs: [{ v: CAR_MIN, c: 'var(--crit)', label: L('Tối thiểu 8%', '8% minimum') }],
+             status: v => v < CAR_MIN ? 'crit' : 'ok' },
+    }[S.cmp];
+  }
+  // câu kết luận phía trên biểu đồ: bao nhiêu ngân hàng đạt ngưỡng, và ngân hàng đang chọn đứng ở đâu so với trung vị
+  function cmpTakeaway(items, thin, med) {
+    const n = items.length + thin.length, sel = items.find(i => i.b === S.bank);
+    const bad = items.filter(i => cmpRefs().status(i.v) === 'crit').length + thin.length;
+    const bp = f0.format(S.bp), q = f0.format(S.q * 100);
+    const head = {
+      pat: L(`${n - bad}/${n} ngân hàng vẫn giữ được ${q}% lợi nhuận khi giảm ${bp} bp.`, `${n - bad} of ${n} banks still keep ${q}% of profit at a ${bp} bp cut.`),
+      max: L(`${n - bad}/${n} ngân hàng giảm được ${bp} bp mà vẫn đạt mục tiêu lợi nhuận.`, `${n - bad} of ${n} banks can cut ${bp} bp and still meet the profit target.`),
+      cov: (() => { const c1 = items.filter(i => i.v < 1).length, c2 = items.filter(i => i.v >= 1 && i.v < 2).length;
+        return c1 || c2 ? L(`${c1} ngân hàng không đủ trang trải dự phòng và ${c2} ngân hàng mỏng (1–2 lần) khi giảm ${bp} bp.`, `At ${bp} bp, ${c1} banks cannot cover provisions and ${c2} are thin (1–2×).`)
+                        : L(`Cả ${n} ngân hàng vẫn trang trải dự phòng trên 2 lần khi giảm ${bp} bp.`, `All ${n} banks still cover provisions more than 2× at ${bp} bp.`); })(),
+      car: bad ? L(`${bad}/${n} ngân hàng có CAR dưới 8% sau khi giảm ${bp} bp.`, `${bad} of ${n} banks fall below the 8% CAR minimum at ${bp} bp.`)
+               : L(`Cả ${n} ngân hàng có số liệu vẫn giữ CAR trên 8% khi giảm ${bp} bp.`, `All ${n} banks with data stay above the 8% CAR minimum at ${bp} bp.`),
+    }[S.cmp];
+    if (!sel || med == null) return head;
+    // lý do: độ nhạy lợi nhuận tỉ lệ nghịch với ROA, nên so ROA của ngân hàng đang chọn với trung vị
+    const roa = b => { const r = row(b, S.year); return r && r.ta ? r.pat / r.ta : null; };
+    const roaMed = median(items.map(i => roa(i.b))), roaSel = roa(S.bank);
+    // cả bốn chỉ tiêu đều "cao hơn là tốt hơn"; riêng CAR chỉ so mức nên nói cao/thấp, không nói tốt/kém
+    const better = sel.v > med;
+    const cmp = S.cmp === 'car' ? L(better ? 'cao hơn' : 'thấp hơn', better ? 'above' : 'below') : L(better ? 'tốt hơn' : 'kém hơn', better ? 'better than' : 'worse than');
+    let why = '';
+    if ((S.cmp === 'pat' || S.cmp === 'max') && ok(roaSel) && ok(roaMed) && (roaSel > roaMed) === better)
+      why = L(`, phù hợp với ROA ${roaSel > roaMed ? 'cao' : 'thấp'} hơn mặt bằng (${pct(roaSel, 2)} so với ${pct(roaMed, 2)})`,
+              `, in line with its ${roaSel > roaMed ? 'higher' : 'lower'} ROA (${pct(roaSel, 2)} vs ${pct(roaMed, 2)})`);
+    return head + ' ' + L(`${S.bank} ở mức ${cmpFmt(sel.v)}, ${cmp} trung vị ${cmpFmt(med)}${why}.`, `${S.bank} is at ${cmpFmt(sel.v)}, ${cmp} the median of ${cmpFmt(med)}${why}.`);
+  }
+  const cmpFmt = v => CMP[S.cmp].fmt(v);
+
   function drawCmp() {
-    const cfg = CMP[S.cmp], el = $('chart-cmp'), items = [], skip = [], thin = [];
+    const cfg = CMP[S.cmp], R = cmpRefs(), el = $('chart-cmp'), items = [], skip = [], thin = [];
     banks.forEach(b => {
       const r = row(b, S.year);
       if (!r || r.loans == null || r.pat == null) { skip.push(b); return; }
@@ -780,28 +824,43 @@
       items.push({ b, v, s, est: S.cmp === 'car' && s.cap && s.cap.est });
     });
     items.sort((a, c) => cfg.asc ? a.v - c.v : c.v - a.v);
+    const med = median(items.map(i => i.v));
     $('cmp-title').textContent = cfg.t();
     $('cmp-desc').textContent = `${cfg.d()} ${L('Năm', 'Year')} ${S.year}, ${f0.format(S.bp)} bp.` + (skip.length ? L(` Thiếu số liệu: ${skip.join(', ')}.`, ` No data: ${skip.join(', ')}.`) : '');
-    const rh = 22, m = { t: 4, r: 64, b: 4, l: 92 }, w = W(el), h = m.t + m.b + items.length * rh;
+    const rh = 22, m = { t: 26, r: 64, b: 4, l: 92 }, w = W(el), h = m.t + m.b + items.length * rh;
     const sv = items.map(i => i.v).sort((a, c) => a - c), qt = p => sv[Math.floor(p * (sv.length - 1))] ?? 0;
-    const span = Math.max(Math.abs(qt(0.1)), Math.abs(qt(0.9))) * 1.6 || 1;
-    const lo = Math.max(Math.min(0, ...sv), -span), hi = Math.min(Math.max(0, ...sv, S.cmp === 'car' ? CAR_MIN * 1.1 : 0), span);
+    const refV = R.refs.map(r => r.v);
+    const span = Math.max(Math.abs(qt(0.1)), Math.abs(qt(0.9)), ...refV.map(Math.abs)) * 1.6 || 1;
+    const lo = Math.max(Math.min(0, ...sv, ...refV), -span), hi = Math.min(Math.max(0, ...sv, ...refV.map(v => v * 1.1)), span);
     const cl = v => Math.max(lo, Math.min(hi, v)), x = v => m.l + (cl(v) - lo) / ((hi - lo) || 1) * (w - m.l - m.r);
-    let g = gradDefs('cg') + `<line x1="${x(0)}" x2="${x(0)}" y1="0" y2="${h}" stroke="var(--line-2)"/>`;
+    const fill = { crit: 'color-mix(in srgb, var(--crit) 45%, var(--card))', warn: 'color-mix(in srgb, var(--warn) 45%, var(--card))', ok: 'var(--other)' };
+    let g = gradDefs('cg') + `<line x1="${x(0)}" x2="${x(0)}" y1="${m.t - 4}" y2="${h}" stroke="var(--line-2)"/>`;
+    // vạch ngưỡng và trung vị (vẽ trước để nằm dưới thanh và chữ số); nhãn của vạch nằm bên trái thì neo bên trái, để hai nhãn gần nhau không đè lên nhau
+    const marks = [...R.refs.map(r => ({ ...r, dash: '5 3', w: 1.5 })), ...(med != null ? [{ v: med, c: 'var(--ink-2)', label: L('Trung vị', 'Median'), dash: '2 3', w: 1.2 }] : [])]
+      .filter(k => k.v >= lo && k.v <= hi).sort((a, b) => a.v - b.v);
+    marks.forEach((k, i) => {
+      const xx = x(k.v), left = marks.length > 1 && i === 0;
+      g += `<line x1="${xx}" x2="${xx}" y1="${m.t - 6}" y2="${h}" stroke="${k.c}" stroke-width="${k.w}" stroke-dasharray="${k.dash}"/>
+        <text class="t-tick" x="${xx + (left ? -4 : 4)}" y="${m.t - 10}" text-anchor="${left ? 'end' : 'start'}" style="fill:${k.c}">${k.label}</text>`;
+    });
     items.forEach((it, i) => {
       const yy = m.t + i * rh, sel = it.b === S.bank, x1 = x(Math.min(0, it.v)), x2 = x(Math.max(0, it.v)), clip = it.v < lo || it.v > hi;
+      const st = R.status(it.v);
       const tt = `<b>${it.b} · ${S.year}</b><br>${cfg.t().replace('?', '')}: <b>${cfg.fmt(it.v)}</b>${it.est ? L(' (ước tính)', ' (estimated)') : ''}<br>${L('Người vay tiết kiệm', 'Borrowers save')} ${ty(it.s.save)} ${BN()}<br>${L('LNST', 'PAT')} ${ty(row(it.b, S.year).pat)} → ${ty(it.s.pat1)} ${BN()}`;
       g += `<g data-tip="${esc(tt)}" data-bank="${it.b}" tabindex="0" role="button" aria-label="${it.b}" style="cursor:pointer">
         <rect x="0" y="${yy}" width="${w}" height="${rh}" fill="${sel ? 'var(--accent-soft)' : 'transparent'}" rx="6"/>
         <text class="${sel ? 't-strong' : 't-lbl'}" x="${m.l - 10}" y="${yy + 15}" text-anchor="end">${it.b}${it.est ? '*' : ''}</text>
-        <rect x="${x1}" y="${yy + 5}" width="${Math.max(2, x2 - x1)}" height="${rh - 10}" rx="4" fill="${sel ? 'url(#cgh)' : 'var(--other)'}"/>
+        <rect x="${x1}" y="${yy + 5}" width="${Math.max(2, x2 - x1)}" height="${rh - 10}" rx="4" fill="${sel ? 'url(#cgh)' : fill[st]}"/>
         ${clip ? `<text class="t-strong" x="${it.v < lo ? x1 + 6 : x2 - 6}" y="${yy + 15}" text-anchor="${it.v < lo ? 'start' : 'end'}">${it.v < lo ? '◂ ' : ''}${cfg.fmt(it.v)}${L(', vượt thang', ', off scale')}${it.v > hi ? ' ▸' : ''}</text>`
                : it.v < 0 && x1 - m.l < 56   // thanh âm chạm sát cột tên: ghi số vào trong thanh để không đè tên ngân hàng
                  ? `<text class="t-strong" x="${x1 + 6}" y="${yy + 15}" text-anchor="start">${cfg.fmt(it.v)}</text>`
                  : `<text class="${sel ? 't-strong' : 't-tick'}" x="${it.v < 0 ? x1 - 6 : x2 + 6}" y="${yy + 15}" text-anchor="${it.v < 0 ? 'end' : 'start'}">${cfg.fmt(it.v)}</text>`}</g>`;
     });
-    if (S.cmp === 'car') g += `<line x1="${x(CAR_MIN)}" x2="${x(CAR_MIN)}" y1="0" y2="${h}" stroke="var(--crit)" stroke-width="1.5" stroke-dasharray="4 3"/>`;
-    el.innerHTML = `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${esc(cfg.t())}">${g}</svg>` +
+    const legend = `<div class="legend"><span><i style="background:var(--other)"></i>${L('Đạt ngưỡng', 'Meets threshold')}</span>` +
+      (S.cmp === 'cov' ? `<span><i style="background:${fill.warn}"></i>${L('Mỏng', 'Thin')}</span>` : '') +
+      `<span><i style="background:${fill.crit}"></i>${L('Không đạt', 'Fails')}</span><span><i style="background:var(--accent)"></i>${L('Ngân hàng đang chọn', 'Selected bank')}</span></div>`;
+    el.innerHTML = `<p class="cmp-take">${esc(cmpTakeaway(items, thin, med))}</p>
+      <svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${esc(cfg.t())}">${g}</svg>${legend}` +
       (thin.length ? `<p class="desc" style="margin-top:8px">${L(`Không vẽ vì lãi quá mỏng, mất hơn toàn bộ lợi nhuận: ${thin.join(', ')}.`, `Not drawn because profit is too thin (it loses more than all of it): ${thin.join(', ')}.`)}</p>` : '') +
       `<p class="desc" style="margin-top:8px">${L('Bấm vào một ngân hàng để xem chi tiết.', 'Click a bank for details.')}</p>`;
     bindBanks(el);
