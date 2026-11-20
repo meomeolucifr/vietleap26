@@ -684,13 +684,27 @@
   // ---------- độ nhạy ----------
   function drawSens(r, s) {
     const el = $('chart-sens'), w = W(el), h = Math.round(Math.max(280, Math.min(360, w * 0.24))), m = { t: 20, r: 80, b: 40, l: 48 };
-    $('sens-desc').textContent = L(`Phần lợi nhuận ${r.bank} giữ lại ở từng mức giảm; vùng xanh là các mức vẫn đạt mục tiêu.`, `Share of ${r.bank}'s profit kept at each cut; the green zone still meets the target.`) +
-      (s.beBp ? L(` Giảm tới ${f0.format(s.beBp)} bp thì ngân hàng hết lãi.`, ` At ${f0.format(s.beBp)} bp the bank stops making a profit.`) : '');
-    if (!(r.pat > 0)) { el.innerHTML = `<p class="desc">${L('LNST năm nền ≤ 0 nên không tính được tỷ lệ giữ lại. Chọn năm hoặc ngân hàng khác.', 'Base-year profit ≤ 0, so retention cannot be computed. Pick another year or bank.')}</p>`; return; }
+    if (!(r.pat > 0)) {
+      $('sens-desc').textContent = '';
+      el.innerHTML = `<p class="desc">${L('LNST năm nền ≤ 0 nên không tính được tỷ lệ giữ lại. Chọn năm hoặc ngân hàng khác.', 'Base-year profit ≤ 0, so retention cannot be computed. Pick another year or bank.')}</p>`; return;
+    }
+    // mô hình là tuyến tính theo mức giảm (mỗi bp mất cùng một khoản), nên thông tin đáng giá nằm ở độ dốc,
+    // độ bất định của φ (khoảng tin cậy 95% của mô hình pass_bank) và khác biệt giữa các kịch bản vĩ mô
+    const ci = PASS_BANK && Math.abs(S.phi - PHI_DATA) < 1e-9 ? PASS_BANK.coefs.find(c => c.var === 'd_yield') : null;
     const xmax = Math.max(200, Math.ceil(S.bp * 1.4 / 50) * 50, s.maxBp ? Math.min(500, Math.ceil(s.maxBp * 1.3 / 50) * 50) : 0);
-    const pts = []; for (let i = 0; i <= 120; i++) { const b = xmax * i / 120; pts.push([b, sim(r, b).retain]); }
-    const yt = ticks(Math.min(0.5, ...pts.map(p => p[1]), S.q - 0.05), 1, 5).filter(v => v <= 1 + 1e-9), y0 = yt[0];
-    const x = v => m.l + v / xmax * (w - m.l - m.r), y = v => m.t + (1 - (v - y0) / (1 - y0)) * (h - m.t - m.b);
+    const curve = p => Array.from({ length: 121 }, (_, i) => { const b = xmax * i / 120; return [b, sim(r, b, { ...S, ...p }).retain]; });
+    const pts = curve({}), lo = ci ? curve({ phi: ci.lo }) : null, hi = ci ? curve({ phi: ci.hi }) : null;
+    const alt = ECON.scenarios.filter(sc => sc.id !== S.macro).map(sc => ({ sc, pts: curve({ macro: sc.id }) }));
+    const per10 = sim(r, 0).retain - sim(r, 10).retain;
+    const mx = ci ? [sim(r, S.bp, { ...S, phi: ci.lo }).maxBp, sim(r, S.bp, { ...S, phi: ci.hi }).maxBp] : null;
+    $('sens-desc').textContent = L(`Mỗi 10 bp giảm lãi, ${r.bank} mất khoảng ${pct(per10)} lợi nhuận; vùng xanh là các mức vẫn đạt mục tiêu.`, `Every 10 bp cut costs ${r.bank} about ${pct(per10)} of profit; the green zone still meets the target.`) +
+      (mx && ok(mx[0]) && ok(mx[1]) ? L(` Tính cả độ bất định của phần bù chi phí vốn, mức giảm tối đa nằm trong khoảng ${f0.format(Math.floor(mx[0]))}–${f0.format(Math.floor(mx[1]))} bp.`,
+                                       ` Allowing for uncertainty in the funding offset, the maximum cut lies between ${f0.format(Math.floor(mx[0]))} and ${f0.format(Math.floor(mx[1]))} bp.`) : '');
+    const allY = [pts, lo || [], ...alt.map(a => a.pts)].flat().map(p => p[1]);
+    // trần trục: 100%, trừ khi kịch bản thuận lợi đẩy lợi nhuận lên trên mức năm nền
+    const yTop = Math.max(1, ...allY);
+    const yt = ticks(Math.min(0.5, ...allY, S.q - 0.05), yTop, 5).filter(v => v <= yTop + 1e-9), y0 = yt[0], y1 = yTop;
+    const x = v => m.l + v / xmax * (w - m.l - m.r), y = v => m.t + (1 - (v - y0) / (y1 - y0)) * (h - m.t - m.b);
     let g = gradDefs('sg');
     yt.forEach(v => g += `<line x1="${m.l}" x2="${w - m.r}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text class="t-tick" x="${m.l - 8}" y="${y(v) + 4}" text-anchor="end">${f0.format(v * 100)}%</text>`);
     ticks(0, xmax, 6).filter(v => v <= xmax).forEach(v => g += `<text class="t-tick" x="${x(v)}" y="${h - m.b + 18}" text-anchor="middle">${f0.format(v)}</text>`);
@@ -701,9 +715,15 @@
       if (s.maxBp <= xmax) g += `<line x1="${xm}" x2="${xm}" y1="${m.t}" y2="${h - m.b}" stroke="var(--good)" stroke-dasharray="3 4"/>
         <text class="t-strong" x="${xm + 6}" y="${m.t + 12}" style="fill:var(--good)">${L('Tối đa', 'Max')} ${f1.format(s.maxBp)} bp</text>`;
     }
-    const line = pts.map((p, i) => (i ? 'L' : 'M') + x(p[0]).toFixed(1) + ',' + y(p[1]).toFixed(1)).join('');
-    g += `<path d="${line}L${x(xmax)},${h - m.b}L${m.l},${h - m.b}Z" fill="url(#sg)"/>`;
-    g += `<path d="${line}" fill="none" stroke="var(--accent)" stroke-width="2.5"/>`;
+    const path = P => P.map((p, i) => (i ? 'L' : 'M') + x(p[0]).toFixed(1) + ',' + y(p[1]).toFixed(1)).join('');
+    if (ci) g += `<path d="${path(hi)}${path(lo.slice().reverse()).replace('M', 'L')}Z" fill="var(--accent)" opacity=".14"/>`;
+    // nhãn ở cuối đường: đường cao hơn ghi phía trên, đường thấp hơn ghi phía dưới, để hai nhãn không đè nhau
+    alt.slice().sort((a, b) => b.pts[b.pts.length - 1][1] - a.pts[a.pts.length - 1][1]).forEach((a, i) => {
+      const end = a.pts[a.pts.length - 1];
+      g += `<path d="${path(a.pts)}" fill="none" stroke="var(--ink-2)" stroke-width="1.5" stroke-dasharray="5 4" opacity=".75"/>
+        <text class="t-tick" x="${x(end[0]) - 4}" y="${y(end[1]) + (i === 0 ? -6 : 14)}" text-anchor="end">${esc(scLabel(a.sc))}</text>`;
+    });
+    g += `<path d="${path(pts)}" fill="none" stroke="var(--accent)" stroke-width="2.5"/>`;
     g += `<line x1="${m.l}" x2="${w - m.r}" y1="${y(S.q)}" y2="${y(S.q)}" stroke="var(--ink-2)" stroke-dasharray="5 5"/>
       <text class="t-lbl" x="${w - m.r + 6}" y="${y(S.q) + 4}">${L('Mục tiêu', 'Target')} ${f0.format(S.q * 100)}%</text>`;
     // nhãn điểm đang chọn đặt dưới-phải đường để không đè nhãn "Tối đa" ở mép trên
@@ -712,7 +732,11 @@
       <text class="t-strong" x="${cx + (right ? -12 : 12)}" y="${cy + 22}" text-anchor="${right ? 'end' : 'start'}">${f0.format(S.bp)} bp · ${L('giữ', 'keeps')} ${pct(s.retain)}</text>`;
     g += `<line id="sx" y1="${m.t}" y2="${h - m.b}" stroke="var(--line-2)" visibility="hidden"/><circle id="sd" r="5" fill="var(--card)" stroke="var(--accent)" stroke-width="2" visibility="hidden"/>
       <rect class="hit" x="${m.l}" y="${m.t}" width="${w - m.l - m.r}" height="${h - m.t - m.b}" fill="transparent" style="cursor:crosshair"/>`;
-    el.innerHTML = `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${L('Đường độ nhạy LNST giữ lại theo mức giảm', 'Profit retained by rate cut')}">${g}</svg>`;
+    const cur = ECON.scenarios.find(sc => sc.id === S.macro);
+    el.innerHTML = `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${L('Đường độ nhạy LNST giữ lại theo mức giảm', 'Profit retained by rate cut')}">${g}</svg>
+      <div class="legend"><span><i style="background:var(--accent)"></i>${cur ? L('Kịch bản ', '') + esc(scLabel(cur).toLowerCase()) + L('', ' scenario') : L('Mô phỏng', 'Simulation')}</span>` +
+      (ci ? `<span><i style="background:var(--accent);opacity:.3"></i>${L(`Khoảng tin cậy 95% của phần bù chi phí vốn (${pct(ci.lo, 0)}–${pct(ci.hi, 0)})`, `95% confidence interval of the funding offset (${pct(ci.lo, 0)}–${pct(ci.hi, 0)})`)}</span>` : '') +
+      (alt.length ? `<span><i style="height:0;width:16px;border-radius:0;border-top:2px dashed var(--ink-2)"></i>${L('Các kịch bản vĩ mô khác', 'Other macro scenarios')}</span>` : '') + `</div>`;
     const svg = el.querySelector('svg'), hit = svg.querySelector('.hit'), sx = svg.querySelector('#sx'), sd = svg.querySelector('#sd');
     let hb = null;
     hit.addEventListener('mousemove', ev => {
@@ -866,6 +890,8 @@
         'The data has no repricing-gap table, so timing is set by average months in effect. The 12-month default is an upper bound, which is why VCB\'s savings at 25 bp (about VND 4,200 bn) exceed the ALCO proposal\'s VND 2,666 bn, which follows the repricing schedule.'),
       L(`"Chi phí vốn giảm theo" mặc định ${pct(PHI_DATA, 0)}: hệ số truyền dẫn khi riêng một ngân hàng đổi lãi (hồi quy panel có hiệu ứng cố định năm). Đây là tương quan lịch sử, không phải cam kết; 0% là kịch bản xấu nhất.`,
         `"Funding cost offset" defaults to ${pct(PHI_DATA, 0)}: the pass-through when one bank moves alone (panel regression with year fixed effects). A historical correlation, not a guarantee; 0% is the worst case.`),
+      L('Tác động là tuyến tính theo mức giảm: mỗi bp làm mất cùng một khoản lợi nhuận. Thực tế có thể cong, vì phần bù chi phí vốn có thể đổi theo mức giảm và lãi thấp hơn giúp người vay trả nợ tốt hơn; dữ liệu năm không đủ để ước lượng độ cong này. Dải mờ trên biểu đồ thể hiện độ bất định của phần bù chi phí vốn.',
+        'The impact is linear in the cut: every bp costs the same amount of profit. In reality it may curve, since the funding offset can change with the size of the cut and lower rates help borrowers repay; annual data cannot estimate this curvature. The shaded band on the chart shows the uncertainty in the funding offset.'),
       L('Mô phỏng giả định mỗi bp NIM mất làm ROA mất 0,8 bp; mô hình panel cho thấy ngân hàng thường bù được một phần, nên thiệt hại LNST là cận trên.',
         'The simulator assumes each bp of lost NIM costs 0.8 bp of ROA; the panel model shows banks usually recover part of it, so the profit hit is an upper bound.'),
       L('Dư nợ là số dư cuối năm nền, gộp trước dự phòng. NIM tính trên tổng tài sản, nên chỉ là đại diện cho NIM trên tài sản sinh lãi.',

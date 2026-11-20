@@ -57,6 +57,7 @@ Ví dụ VCB, năm nền 2025, giảm 25 bp, φ = 39%, kịch bản Cơ sở: ng
 ### Hạn chế
 
 - Kết quả là tác động tăng thêm trong 12 tháng so với năm nền, không phải dự báo.
+- Tác động là tuyến tính theo mức giảm (VCB 2025: mỗi 10 bp mất khoảng 2,3% LNST). Thực tế có thể cong: phần bù chi phí vốn có thể đổi theo mức giảm, lãi thấp hơn giúp người vay trả nợ tốt hơn và dự phòng giảm. Dữ liệu năm không đủ để ước lượng độ cong; dashboard thay vào đó vẽ dải bất định theo khoảng tin cậy 95% của φ (26–52%), cho VCB 2025 mức giảm tối đa trong khoảng 35–55 bp.
 - Thiếu bảng kỳ định lại lãi suất, nên thời điểm áp lãi mới là giả định (mặc định 12 tháng, cận trên). Vì vậy số tiết kiệm của VCB ở 25 bp (khoảng 4.200 tỷ) cao hơn ước tính 2.666 tỷ của đề xuất ALCO.
 - Các hệ số là tương quan có điều kiện, không phải nhân quả. φ là quan hệ lịch sử, không phải cam kết của người gửi tiền.
 - Hệ số GDP trong `llp_macro` nhạy với cách tính sai số; giai đoạn 2020–2021 có chính sách cơ cấu nợ (Thông tư 01/2020) có thể làm dự phòng phản ứng chậm.
