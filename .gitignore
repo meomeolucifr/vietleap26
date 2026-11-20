@@ -1,0 +1,19 @@
+# Excel / Office lock files
+~$*
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# công cụ test trình duyệt
+.playwright-mcp/
+
+# Dữ liệu KLTN của người khác, chỉ dùng làm mẫu định dạng ở máy local: không công khai
+Copy of DL_KLTN_*.xlsx
+
+# Bản sao trùng của Data/
+1ABCD/
+
+# Bản panel cũ không có công thức (đã thay bằng VietLeap26_Bank_Panel_with_ratios.xlsx)
+Output/VietLeap26_Bank_Panel_2010_2025.xlsx

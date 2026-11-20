@@ -1,0 +1,1061 @@
+nhóm tôi đang làm dashboard về sự thay đổi lãi suất cho vay ảnh hưởng tới LNTT, chỉ số an toàn vốn car, khả năng trang trải dự phòng, người đi vay tiết kiệm được. nghiên cứu của tôi đang đơn giản, bạn hãy đề xuất các yếu tố vĩ mô mà đề tài có thể ảnh hưởng, hãy điều hướng để trình bày vào dashboard. (thầy hướng dẫn gợi ý là chạy mô hình)
+Mình nghĩ đề tài của nhóm bạn có thể phát triển lên một cấp độ cao hơn khá nhiều. Hiện tại, nhóm đang xây dựng một công cụ mô phỏng tác động của việc giảm lãi suất cho vay đối với ngân hàng và người đi vay. Tuy nhiên, nếu chỉ thay đổi lãi suất 25 hoặc 50 điểm cơ bản rồi tính LNTT, CAR, khả năng trang trải dự phòng và số tiền khách hàng tiết kiệm được thì dashboard vẫn thiên về một công cụ tính toán.
+
+Mình đề xuất chuyển hướng thành:
+
+1. Định hướng phát triển đề tài
+Định hướng đề xuất
+ĐÁNH GIÁ DƯ ĐỊA GIẢM LÃI SUẤT CHO VAY CỦA NGÂN HÀNG TRONG CÁC KỊCH BẢN KINH TẾ VĨ MÔ
+Assessing Banks' Lending Rate Reduction Capacity under Different Macroeconomic Scenarios
+
+Câu hỏi nghiên cứu:
+
+Trong những điều kiện kinh tế vĩ mô khác nhau, ngân hàng có thể giảm lãi suất cho vay bao nhiêu mà vẫn đảm bảo lợi nhuận, an toàn vốn và khả năng hấp thụ rủi ro tín dụng, đồng thời tạo ra lợi ích thực tế cho người đi vay?
+
+Điểm khác biệt là chúng ta không còn chỉ hỏi:
+
+Giảm 25 bps thì ngân hàng mất bao nhiêu lợi nhuận?
+
+Giảm 50 bps thì người đi vay tiết kiệm được bao nhiêu?
+
+Mà bổ sung câu hỏi:
+
+Nếu kinh tế tăng trưởng chậm lại thì khả năng trả nợ của khách hàng thay đổi thế nào?
+
+Nếu lạm phát tăng, ngân hàng có còn đủ dư địa để giảm lãi suất?
+
+Nếu chi phí huy động vốn chưa giảm tương ứng, lợi nhuận ngân hàng bị ảnh hưởng ra sao?
+
+Nếu nền kinh tế suy giảm và nợ xấu tăng, ngân hàng còn đủ khả năng hấp thụ chi phí dự phòng không?
+
+Đây mới là những câu hỏi giúp dashboard có giá trị hỗ trợ quyết định cho ALCO và CFO.
+
+2. Những yếu tố vĩ mô nên đưa vào nghiên cứu
+Mình chia thành 4 nhóm để nhóm dễ lựa chọn và xây dựng mô hình.
+
+Nhóm 1. Điều kiện tiền tệ và lãi suất
+Ưu tiên rất cao
+Đây là nhóm có liên hệ trực tiếp nhất với quyết định giảm lãi suất cho vay.
+
+How Central Banks Influence Your Money - HappyInvest
+1. Lãi suất điều hành của NHNN (Policy Rate)
+
+Đo lường: Lãi suất tái cấp vốn, tái chiết khấu.
+
+Ý nghĩa: Phản ánh định hướng chính sách tiền tệ.
+
+Tác động: Khi lãi suất điều hành giảm, điều kiện tiền tệ có thể thuận lợi hơn, tạo điều kiện cho lãi suất thị trường giảm.
+
+Финансист о будущем депозитов: что ждет вкладчиков в Казахстане — новости на сайте Ак Жайык
+2. Lãi suất huy động bình quân (Deposit Rate)
+
+Đo lường: Chi phí trả lãi tiền gửi / tiền gửi bình quân, hoặc lãi suất huy động bình quân theo dữ liệu thị trường.
+
+Ý nghĩa: Phản ánh chi phí vốn của ngân hàng.
+
+Tác động: Nếu lãi suất cho vay giảm nhưng chi phí huy động chưa giảm, NIM và lợi nhuận sẽ chịu áp lực.
+
+#finance #banque #marchéinterbancaire #economie #étudiant #financeiq #fusacq #privateequity | Finance IQ
+3. Lãi suất liên ngân hàng (Interbank Rate)
+
+Đo lường: Lãi suất qua đêm hoặc kỳ hạn 1 tuần.
+
+Ý nghĩa: Phản ánh tình hình thanh khoản ngắn hạn trong hệ thống.
+
+Tác động: Khi thanh khoản căng thẳng, chi phí vốn ngắn hạn có thể tăng, gây khó khăn cho việc giảm lãi suất cho vay.
+
+Đề xuất: Trong mô hình, mình ưu tiên lãi suất huy động hơn lãi suất điều hành vì nó liên quan trực tiếp đến chi phí vốn và biên lãi của ngân hàng.
+
+Lãi suất điều hành và liên ngân hàng nên được thể hiện ở phần bối cảnh vĩ mô.
+
+Nhóm 2. Tăng trưởng kinh tế và khả năng trả nợ
+Ưu tiên rất cao
+Đây là nhóm giúp đề tài vượt ra khỏi phạm vi phân tích lợi nhuận ngân hàng, để đánh giá tác động đến nền kinh tế và người đi vay.
+
+Vietnam Manufacturing Tracker: As of February 2026
+4. Tốc độ tăng trưởng GDP (GDP Growth)
+
+Đo lường: Tốc độ tăng GDP thực tế theo quý hoặc năm.
+
+Ý nghĩa: Phản ánh sức khỏe chung của nền kinh tế.
+
+Tác động:
+
+GDP tăng: Hoạt động kinh doanh và thu nhập có xu hướng cải thiện.
+
+GDP giảm tốc: Khả năng trả nợ của doanh nghiệp và hộ gia đình có thể suy yếu.
+
+Liên quan: Nợ xấu, chi phí dự phòng và khả năng trang trải dự phòng.
+
+Soaring Food Prices Undermine Biden's Economic Pitch to Voters - Bloomberg
+5. Tỷ lệ lạm phát (CPI)
+
+Đo lường: Tốc độ tăng chỉ số giá tiêu dùng.
+
+Ý nghĩa: Phản ánh biến động mặt bằng giá cả.
+
+Tác động:
+
+Lạm phát tăng có thể làm giảm sức mua và khả năng tài chính của người đi vay.
+
+Áp lực lạm phát có thể hạn chế dư địa nới lỏng chính sách tiền tệ.
+
+Liên quan: Chính sách lãi suất, khả năng trả nợ và chất lượng tín dụng.
+
+Australian unemployment rate stable, ETHRWorld
+6. Tỷ lệ thất nghiệp (Unemployment Rate)
+
+Đo lường: Tỷ lệ thất nghiệp trong lực lượng lao động.
+
+Ý nghĩa: Phản ánh tình trạng việc làm và thu nhập.
+
+Tác động:
+
+Thất nghiệp tăng có thể làm giảm khả năng thanh toán khoản vay.
+
+Rủi ro nợ quá hạn và chi phí dự phòng có thể tăng.
+
+Liên quan: NPL, chi phí dự phòng và khả năng hấp thụ rủi ro.
+
+Một điểm rất đáng chú ý: nghiên cứu IMF năm 2025 về tác động của lãi suất đến ngân hàng đã phân tích riêng NIM, dự phòng tổn thất tín dụng và lợi nhuận; đồng thời xem xét vai trò của thất nghiệp, tỷ trọng khoản vay lãi suất thả nổi và cơ cấu nguồn vốn ngân hàng. Đây là cơ sở nghiên cứu khá sát với đề tài của nhóm. 
+
+Thư viện IMF
++1
+
+Nhóm 3. Ổn định tài chính và thị trường
+Ưu tiên trung bình
+Yếu tố
+
+Ý nghĩa
+
+Liên hệ với đề tài
+
+Tỷ giá USD/VND
+
+Phản ánh áp lực tỷ giá
+
+Ảnh hưởng điều kiện tiền tệ và rủi ro ngoại hối
+
+Tăng trưởng tín dụng
+
+Phản ánh tốc độ mở rộng cho vay
+
+Ảnh hưởng thu nhập lãi và RWA
+
+Chênh lệch lãi suất cho vay – huy động
+
+Phản ánh biên lãi thị trường
+
+Đánh giá dư địa giảm lãi cho vay
+
+Lợi suất trái phiếu Chính phủ
+
+Phản ánh điều kiện thị trường vốn
+
+Bổ sung góc nhìn về lãi suất và danh mục đầu tư
+
+Trong nhóm này, mình đặc biệt quan tâm đến tăng trưởng tín dụng và tỷ giá USD/VND.
+
+Ví dụ:
+
+Nếu ngân hàng giảm lãi suất để kích thích tín dụng, dư nợ có thể tăng.
+
+Dư nợ tăng có thể làm tăng thu nhập lãi nhưng cũng khiến tài sản có rủi ro tăng, tác động đến CAR.
+
+Nếu tỷ giá chịu áp lực, điều kiện thanh khoản và chính sách tiền tệ có thể thay đổi.
+
+IMF cũng ghi nhận rằng tại Việt Nam, các công cụ như lãi suất điều hành, lãi suất OMO, tỷ giá và hạn mức tăng trưởng tín dụng cùng tham gia vào cơ chế điều hành tiền tệ. 
+
+Thư viện IMF
++1
+
+Nhóm 4. Điều kiện của người đi vay và thị trường bất động sản
+Có thể mở rộng
+Yếu tố
+
+Cơ chế tác động
+
+Tăng trưởng doanh thu bán lẻ
+
+Phản ánh sức mua và khả năng chi tiêu hộ gia đình
+
+Chỉ số sản xuất công nghiệp (IIP)
+
+Phản ánh hoạt động sản xuất và nhu cầu vốn doanh nghiệp
+
+Giá bất động sản
+
+Ảnh hưởng giá trị tài sản bảo đảm
+
+Tăng trưởng thu nhập bình quân
+
+Ảnh hưởng khả năng trả nợ của hộ gia đình
+
+Mình không khuyến khích đưa toàn bộ nhóm này vào mô hình ngay từ đầu. Có thể chọn IIP hoặc tăng trưởng bán lẻ làm biến đại diện bổ sung cho hoạt động kinh tế.
+
+3. Chọn những biến nào để chạy mô hình?
+Đây là phần quan trọng nhất theo gợi ý của thầy.
+
+Mình không muốn nhóm đưa 8–10 biến vào một mô hình chỉ để dashboard trông phức tạp. Nên xây dựng một mô hình có cơ sở kinh tế và liên kết trực tiếp với 4 kết quả nghiên cứu.
+
+3.1. Bộ biến đề xuất
+Nhóm
+
+Biến
+
+Ký hiệu
+
+Vai trò
+
+Vĩ mô
+
+Lãi suất huy động bình quân
+
+DEPOSIT
+
+Chi phí vốn
+
+Vĩ mô
+
+Tăng trưởng GDP
+
+GDP
+
+Sức khỏe nền kinh tế
+
+Vĩ mô
+
+Lạm phát
+
+CPI
+
+Áp lực giá cả
+
+Vĩ mô
+
+Tỷ lệ thất nghiệp
+
+UNEMP
+
+Khả năng trả nợ
+
+Ngân hàng
+
+Tăng trưởng tín dụng
+
+LOANG
+
+Mở rộng dư nợ
+
+Ngân hàng
+
+Tỷ lệ nợ xấu
+
+NPL
+
+Rủi ro tín dụng
+
+Ngân hàng
+
+Quy mô tài sản
+
+SIZE
+
+Quy mô ngân hàng
+
+Ngân hàng
+
+Tỷ lệ tiền gửi/tổng nguồn vốn
+
+DEP_SHARE
+
+Cơ cấu huy động
+
+Mình đề xuất 4 biến vĩ mô chính là DEPOSIT, GDP, CPI và UNEMP.
+
+Tỷ giá USD/VND có thể đưa vào kịch bản stress test bổ sung.
+
+3.2. Mô hình thứ nhất: Tác động đến khả năng sinh lời
+Mục tiêu: Xác định những yếu tố vĩ mô nào ảnh hưởng đến biên lợi nhuận của ngân hàng.
+
+Biến phụ thuộc: NIM (Net Interest Margin).
+
+N
+I
+M
+i
+t
+=
+α
++
+β
+1
+D
+E
+P
+O
+S
+I
+T
+t
++
+β
+2
+G
+D
+P
+t
++
+β
+3
+C
+P
+I
+t
++
+β
+4
+L
+O
+A
+N
+G
+i
+t
++
+β
+5
+N
+P
+L
+i
+t
++
+β
+6
+S
+I
+Z
+E
+i
+t
++
+μ
+i
++
+ϵ
+i
+t
+NIM 
+it
+​
+ =
+​
+  
+α+β 
+1
+​
+ DEPOSIT 
+t
+​
+ 
++β 
+2
+​
+ GDP 
+t
+​
+ +β 
+3
+​
+ CPI 
+t
+​
+ 
++β 
+4
+​
+ LOANG 
+it
+​
+ +β 
+5
+​
+ NPL 
+it
+​
+ 
++β 
+6
+​
+ SIZE 
+it
+​
+ +μ 
+i
+​
+ +ϵ 
+it
+​
+ 
+​
+ 
+Trong đó:
+
+i
+i: Ngân hàng.
+
+t
+t: Thời gian.
+
+N
+I
+M
+NIM: Biên lãi ròng.
+
+D
+E
+P
+O
+S
+I
+T
+DEPOSIT: Lãi suất huy động bình quân.
+
+G
+D
+P
+GDP: Tăng trưởng GDP.
+
+C
+P
+I
+CPI: Lạm phát.
+
+L
+O
+A
+N
+G
+LOANG: Tăng trưởng tín dụng.
+
+N
+P
+L
+NPL: Tỷ lệ nợ xấu.
+
+S
+I
+Z
+E
+SIZE: Quy mô ngân hàng.
+
+μ
+i
+μ 
+i
+​
+ : Yếu tố đặc trưng riêng của ngân hàng.
+
+Ý nghĩa đối với dashboard:
+
+Kết quả mô hình cho phép nhóm đánh giá môi trường vĩ mô nào đang tạo áp lực hoặc hỗ trợ khả năng sinh lời của ngân hàng.
+
+Ví dụ minh họa về cách diễn giải:
+
+Hệ số DEPOSIT dương: Lãi suất huy động tăng có mối liên hệ cùng chiều với NIM trong mẫu nghiên cứu, sau khi kiểm soát các biến khác.
+
+Hệ số GDP dương: Tăng trưởng kinh tế có mối liên hệ cùng chiều với NIM.
+
+Hệ số NPL âm: Nợ xấu cao có thể đi kèm biên lợi nhuận thấp hơn.
+
+Đây là các giả thuyết về dấu hệ số, không phải kết quả hồi quy đã được kiểm chứng.
+
+3.3. Mô hình thứ hai: Tác động đến rủi ro tín dụng và dự phòng
+Mục tiêu: Đánh giá điều kiện kinh tế nào làm gia tăng áp lực dự phòng của ngân hàng.
+
+Biến phụ thuộc nên sử dụng:
+
+L
+L
+P
+_
+R
+A
+T
+I
+O
+=
+C
+h
+i
+ 
+p
+h
+ı
+ˊ
+ 
+d
+ự 
+p
+h
+o
+ˋ
+n
+g
+D
+ư 
+n
+ợ 
+c
+h
+o
+ 
+v
+a
+y
+ 
+b
+ı
+ˋ
+n
+h
+ 
+q
+u
+a
+^
+n
+LLP_RATIO= 
+Dư nợ cho vay b 
+ı
+ˋ
+ nh qu 
+a
+^
+ n
+Chi ph 
+ı
+ˊ
+  dự ph 
+o
+ˋ
+ ng
+​
+ 
+Mô hình:
+
+L
+L
+P
+i
+t
+=
+α
++
+β
+1
+G
+D
+P
+t
++
+β
+2
+C
+P
+I
+t
++
+β
+3
+U
+N
+E
+M
+P
+t
++
+β
+4
+L
+O
+A
+N
+G
+i
+t
++
+β
+5
+N
+P
+L
+i
+t
++
+μ
+i
++
+ϵ
+i
+t
+LLP 
+it
+​
+ =
+​
+  
+α+β 
+1
+​
+ GDP 
+t
+​
+ +β 
+2
+​
+ CPI 
+t
+​
+ 
++β 
+3
+​
+ UNEMP 
+t
+​
+ +β 
+4
+​
+ LOANG 
+it
+​
+ 
++β 
+5
+​
+ NPL 
+it
+​
+ +μ 
+i
+​
+ +ϵ 
+it
+​
+ 
+​
+ 
+Giải thích:
+
+Biến
+
+Kỳ vọng dấu
+
+Ý nghĩa
+
+GDP
+
+-
+
+Kinh tế tăng trưởng tốt có thể giảm áp lực nợ xấu
+
+CPI
+
++
+
+Lạm phát tăng có thể làm suy yếu khả năng trả nợ
+
+UNEMP
+
++
+
+Thất nghiệp tăng có thể làm tăng rủi ro tín dụng
+
+LOANG
+
++/-
+
+Tăng trưởng tín dụng nhanh có thể làm thay đổi rủi ro danh mục
+
+NPL
+
++
+
+Nợ xấu cao thường đi kèm áp lực dự phòng lớn
+
+Sau khi có kết quả, nhóm đưa các thay đổi dự phòng vào chỉ số:
+
+K
+=
+P
+P
+O
+P
+D
+P
+K= 
+DP
+PPOP
+​
+ 
+Trong đó:
+
+PPOP: Lợi nhuận trước dự phòng.
+
+DP: Chi phí dự phòng rủi ro tín dụng.
+
+K: Khả năng hấp thụ chi phí dự phòng.
+
+Lưu ý: K không phải tỷ lệ bao phủ nợ xấu (LLCR). Đây là hai chỉ số khác nhau. Nếu có dữ liệu, nhóm có thể trình bày thêm LLCR để đánh giá chiều sâu về dự phòng.
+
+4. Làm thế nào để kết hợp mô hình với dashboard hiện tại?
+Đây là hướng mình muốn nhóm tập trung nhất.
+
+Thay vì đặt các biến vĩ mô thành một phần riêng biệt không liên quan đến kết quả, hãy xây dựng một chuỗi tác động:
+
+Cơ chế truyền dẫn đề xuất
+ĐIỀU KIỆN KINH TẾ VĨ MÔ
+
+GDP · CPI · Thất nghiệp · Lãi suất huy động · Tỷ giá
+
+ĐIỀU KIỆN HOẠT ĐỘNG NGÂN HÀNG
+
+Chi phí vốn · Nhu cầu tín dụng · Khả năng trả nợ · Rủi ro tín dụng
+
+MÔ HÌNH ĐỊNH LƯỢNG
+
+Ước lượng tác động của các yếu tố vĩ mô đến NIM và chi phí dự phòng
+
+NGÂN HÀNG
+
+LNTT · CAR · Khả năng trang trải dự phòng
+
+NGƯỜI ĐI VAY
+
+Tiết kiệm lãi vay · Khả năng trả nợ
+
+Điều này giúp dashboard thể hiện cả góc nhìn ngân hàng và góc nhìn nền kinh tế.
+
+5. Đề xuất thiết kế dashboard mới
+Mình đề xuất chia dashboard thành 4 khu vực chính, vẫn giữ được trọng tâm ban đầu.
+
+Khu vực 1
+MACROECONOMIC OVERVIEW – BỐI CẢNH VĨ MÔ
+
+Theo dõi điều kiện kinh tế hiện tại và xu hướng 5 năm.
+
+Tăng trưởng GDP
+
+X.X%
+Xu hướng theo quý
+Lạm phát CPI
+
+X.X%
+Xu hướng theo tháng
+Lãi suất huy động
+
+X.X%
+Chi phí vốn
+Thất nghiệp
+
+X.X%
+Thị trường lao động
+Đây là wireframe minh họa, chưa phải số liệu thực tế.
+Khu vực 2
+ECONOMETRIC MODEL – KẾT QUẢ MÔ HÌNH
+
+Hiển thị hệ số hồi quy, chiều tác động và mức ý nghĩa thống kê.
+
+Minh họa cấu trúc hiển thị hệ số giả định, không phải kết quả hồi quy thực tế.
+
+-0,5
+-0,25
+0
+0,25
+0,5
+GDP
+CPI
+DEPOSIT
+UNEMP
+GDP: Hệ số minh họa 0,5
+CPI: Hệ số minh họa -0,2
+DEPOSIT: Hệ số minh họa 0,3
+UNEMP: Hệ số minh họa -0,3
+Hệ số giả định chỉ để minh họa cách trình bày; cần thay bằng kết quả hồi quy thật.
+Khu vực 3
+INTEREST RATE SCENARIO – MÔ PHỎNG GIẢM LÃI SUẤT
+
+Kết hợp mức giảm lãi suất với trạng thái kinh tế vĩ mô.
+
+0 bps
+
+Kịch bản cơ sở
+25 bps
+
+Giảm nhẹ
+50 bps
+
+Giảm mạnh
+Trạng thái vĩ mô
+
+Thuận lợi
+
+GDP tốt, CPI ổn định
+Cơ sở
+
+Theo dự báo
+Bất lợi
+
+GDP yếu, thất nghiệp tăng
+Khu vực 4
+BANKING & BORROWER IMPACT – KẾT QUẢ TÁC ĐỘNG
+
+LNTT sau điều chỉnh
+XX tỷ
+CAR sau điều chỉnh
+XX%
+Khả năng hấp thụ dự phòng
+X.X lần
+Khách hàng tiết kiệm
+XX tỷ
+Lưu ý: Các số X trong wireframe là vị trí chờ dữ liệu, không phải kết quả thực tế.
+
+6. Điểm mình muốn nhóm bổ sung: Ma trận 3 × 3 kịch bản
+Đây có thể là phần tạo điểm nhấn lớn nhất cho cuộc thi.
+
+Thay vì chỉ có 3 kịch bản giảm lãi suất, hãy kết hợp 3 mức giảm lãi suất và 3 trạng thái vĩ mô.
+
+Trạng thái kinh tế
+
+Không giảm
+
+Giảm 25 bps
+
+Giảm 50 bps
+
+Thuận lợi
+
+Cơ sở
+
+Kịch bản A
+
+Kịch bản B
+
+Bình thường
+
+Cơ sở
+
+Kịch bản C
+
+Kịch bản D
+
+Bất lợi
+
+Stress test
+
+Kịch bản E
+
+Kịch bản F
+
+Ví dụ cách xây dựng:
+
+Kịch bản bất lợi
+
+Stress scenario
+GDP tăng trưởng chậm lại.
+
+CPI tăng.
+
+Thất nghiệp tăng.
+
+Chi phí huy động vốn giảm chậm hoặc giữ nguyên.
+
+Dashboard sẽ trả lời:
+
+Nếu giảm lãi suất 25 bps, LNTT còn bao nhiêu?
+
+Nếu giảm 50 bps, CAR còn cách ngưỡng an toàn bao nhiêu?
+
+Khả năng trang trải chi phí dự phòng còn bao nhiêu lần?
+
+Người đi vay tiết kiệm được bao nhiêu tiền?
+
+Điều quan trọng là phải tránh tính trùng tác động: phần giảm thu nhập lãi từ 25/50 bps được tính bằng mô hình mô phỏng danh mục khoản vay; mô hình hồi quy dùng để ước lượng tác động của điều kiện vĩ mô lên NIM và rủi ro tín dụng. Không được cộng thêm một lần tác động giảm lãi suất nếu hệ số hồi quy đã bao gồm chính cú sốc đó.
+
+7. Nên lấy dữ liệu ở đâu?
+Mình đề xuất nguồn dữ liệu sau:
+
+Dữ liệu
+
+Nguồn ưu tiên
+
+Tần suất
+
+GDP
+
+Cục Thống kê (NSO)
+
+Quý
+
+CPI
+
+Cục Thống kê (NSO)
+
+Tháng
+
+Thất nghiệp
+
+Cục Thống kê (NSO)
+
+Quý
+
+IIP
+
+Cục Thống kê (NSO)
+
+Tháng
+
+Lãi suất điều hành
+
+NHNN
+
+Khi thay đổi
+
+Lãi suất huy động
+
+NHNN
+
+Tháng
+
+Lãi suất liên ngân hàng
+
+NHNN
+
+Ngày
+
+Tỷ giá
+
+NHNN
+
+Ngày
+
+Tăng trưởng tín dụng
+
+NHNN
+
+Tháng/năm
+
+NIM, NPL, DP, CAR, LNTT
+
+BCTC ngân hàng
+
+Quý/năm
+
+Nguồn tham khảo:
+
+Cục Thống kê Việt Nam – dữ liệu GDP, CPI, thất nghiệp, IIP.
+
+Ngân hàng Nhà nước Việt Nam – dữ liệu lãi suất và tín dụng.
+
+World Bank Data – Vietnam – dữ liệu kinh tế bổ sung.
+
+IMF – Rethinking Transmission of Monetary Policy in Vietnam – tài liệu tham khảo về cơ chế truyền dẫn tiền tệ tại Việt Nam.
+
+8. Mình khuyên nhóm chạy mô hình như thế nào?
+Có một vấn đề cần lưu ý: nếu nhóm chỉ sử dụng VCB năm 2025 thì không đủ quan sát để chạy một mô hình hồi quy đa biến đáng tin cậy.
+
+Mình đề xuất:
+
+Phương án dữ liệu cho mô hình
+
+Khuyến nghị
+Panel Data – Dữ liệu bảng
+
+10–15 ngân hàng thương mại.
+
+Dữ liệu theo quý từ 2015–2025.
+
+Kết hợp dữ liệu ngân hàng và vĩ mô.
+
+Ước lượng mô hình tác động cố định (FEM).
+
+Quy trình thực hiện
+
+Thu thập dữ liệu
+
+Tạo bộ dữ liệu ngân hàng theo quý và bộ dữ liệu vĩ mô tương ứng.
+
+Kiểm tra dữ liệu
+
+Kiểm tra thiếu dữ liệu, ngoại lệ, tính nhất quán và đa cộng tuyến.
+
+Chạy hồi quy
+
+Chạy mô hình NIM và LLP riêng biệt.
+
+Kiểm định
+
+Kiểm tra FEM/REM, phương sai thay đổi, tự tương quan và phụ thuộc chéo; lựa chọn sai số chuẩn phù hợp.
+
+Đưa kết quả vào dashboard
+
+Sử dụng hệ số hồi quy để xây dựng các kịch bản vĩ mô và kiểm tra độ nhạy.
+
+Một lưu ý kỹ thuật khá quan trọng: GDP, CPI, thất nghiệp và lãi suất huy động là biến chung cho các ngân hàng tại cùng một thời điểm. Nếu chạy FEM với cả hiệu ứng thời gian đầy đủ, các biến vĩ mô này sẽ bị hấp thụ bởi biến giả thời gian và không thể ước lượng hệ số riêng. Nhóm cần lựa chọn cấu trúc hiệu ứng cố định phù hợp, hoặc sử dụng tương tác giữa biến vĩ mô và đặc điểm riêng của ngân hàng.
+
+Ngoài ra, hồi quy thông thường cho thấy mối liên hệ có điều kiện, chưa tự động chứng minh quan hệ nhân quả. Muốn khẳng định tác động nhân quả cần thiết kế nhận diện phù hợp.
+
+9. Kết luận: Nhóm nên chọn hướng nào?
+Nếu là mình định hướng cho nhóm, mình sẽ chốt như sau:
+
+Nội dung
+
+Phương án chốt
+
+Đề tài
+
+Dư địa giảm lãi suất cho vay trong các kịch bản kinh tế vĩ mô
+
+Biến vĩ mô chính
+
+DEPOSIT, GDP, CPI, UNEMP
+
+Mô hình 1
+
+FEM – Tác động đến NIM
+
+Mô hình 2
+
+FEM – Tác động đến chi phí dự phòng
+
+Mô phỏng
+
+0/25/50 bps
+
+Kịch bản
+
+Thuận lợi / Cơ sở / Bất lợi
+
+Đầu ra ngân hàng
+
+LNTT, CAR, khả năng hấp thụ dự phòng
+
+Đầu ra người vay
+
+Tiền lãi tiết kiệm được
+
+Người sử dụng
+
+ALCO, CFO, chuyên viên phân tích ngân hàng
+
+Mình muốn nhấn mạnh 3 điểm để nhóm không bị lệch đề tài:
+
+Không biến đề tài thành nghiên cứu dự báo GDP, CPI hay thất nghiệp. Các yếu tố này chỉ đóng vai trò điều kiện đầu vào để đánh giá dư địa giảm lãi suất.
+
+Không cần hồi quy tất cả 4 chỉ tiêu đầu ra. NIM và chi phí dự phòng là hai hướng hồi quy chính; LNTT, CAR và khả năng hấp thụ dự phòng có thể được tính toán tiếp trong mô hình mô phỏng.
+
+CAR cần được tính dựa trên vốn tự có và tài sản có rủi ro tương ứng. Nếu kịch bản vĩ mô làm thay đổi RWA, phải cập nhật mẫu số, không chỉ điều chỉnh lợi nhuận.
+
+Một điểm nữa: nhóm đang sử dụng BCTC hợp nhất 2025 của VCB làm cơ sở mô phỏng, vì vậy có thể giữ nguyên phần mô phỏng VCB, còn mô hình hồi quy sử dụng dữ liệu bảng nhiều ngân hàng để tìm ra mối quan hệ chung.
