@@ -89,7 +89,7 @@
   .chips { display: flex; gap: 6px; }
   .chip { border: 1px solid var(--line-2); background: var(--card); border-radius: 999px; padding: 5px 12px; cursor: pointer; color: var(--ink-2); font-size: 13px; }
   .chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
-  .assump { margin-top: 14px; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; }
+  .assump { margin-top: 14px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
   .field { background: var(--card-2); border-radius: var(--r-sm); padding: 9px 12px; }
   .field label { display: block; font-size: 11.5px; color: var(--ink-2); font-weight: 500; line-height: 1.3; min-height: 30px; }
   .field .in { display: flex; align-items: baseline; gap: 4px; }
@@ -230,7 +230,6 @@
     </div>
     <div class="tabs" role="tablist">
       <button role="tab" aria-selected="true" data-tab="sim" data-t="tabSim"></button>
-      <button role="tab" aria-selected="false" data-tab="ana" data-t="tabAna"></button>
       <button role="tab" aria-selected="false" data-tab="met" data-t="tabMet"></button>
     </div>
     <span class="spacer"></span>
@@ -269,9 +268,6 @@
         <div class="field"><label for="months" data-th="months"></label><div class="in"><input id="months" type="number" min="0" max="12" step="0.5" value="12"><span class="u" data-t="monthsU"></span></div></div>
         <div class="field hl"><label for="phi" data-th="phi"></label><div class="in"><input id="phi" type="number" min="0" max="100" value="40"><span class="u">%</span></div>
           <div class="presets" id="phi-presets"></div></div>
-        <div class="field"><label for="tax" data-th="tax"></label><div class="in"><input id="tax" type="number" min="0" max="50" step="0.5" value="20"><span class="u">%</span></div></div>
-        <div class="field"><label for="k" data-th="k"></label><div class="in"><input id="k" type="number" min="0" max="100" value="100"><span class="u">%</span></div></div>
-        <div class="field"><label for="q" data-th="q"></label><div class="in"><input id="q" type="number" min="0" max="100" value="90"><span class="u">%</span></div></div>
       </div>
       <div class="macro-row" id="macro-row" hidden>
         <span class="lbl" data-th="macro"></span>
@@ -311,17 +307,8 @@
           <div class="card-head"><div><h2 id="scen-title"></h2><p class="desc" id="scen-desc"></p></div></div>
           <div class="scroll"><table id="tbl-scen"></table></div>
         </article>
-        <article class="card">
-          <div class="card-head"><div><h2 data-t="whoTitle"></h2><p class="desc" id="who-desc"></p></div></div>
-          <div id="who-pays"></div>
-        </article>
       </div>
     </section>
-  </main>
-
-  <!-- ===================== PHÂN TÍCH ===================== -->
-  <main id="tab-ana" hidden>
-    <div class="stack" id="ana-root"></div>
   </main>
 
   <!-- ===================== PHƯƠNG PHÁP ===================== -->
@@ -365,12 +352,11 @@
 <div id="tip" role="tooltip"></div>
 
 <script src="data.js"></script>
-<script src="analysis.js"></script>
 <script src="econ.js"></script>
 <script>
 (() => {
   'use strict';
-  const DATA = window.BANK_DATA, META = window.BANK_META, AN = window.ANALYSIS;
+  const DATA = window.BANK_DATA, META = window.BANK_META;
   const ECON = window.ECON || { models: [], scenarios: [] };
   const $ = id => document.getElementById(id);
   const CAR_MIN = 0.08;  // tỷ lệ an toàn vốn tối thiểu theo Thông tư 41/2016/TT-NHNN
@@ -407,7 +393,7 @@
   // ---------- chữ tĩnh và thuật ngữ ----------
   const T = {
     nav: ['Điều hướng', 'Navigation'],
-    tabSim: ['Mô phỏng', 'Simulator'], tabAna: ['Phân tích dữ liệu', 'Data analysis'], tabMet: ['Phương pháp & dữ liệu', 'Method & data'],
+    tabSim: ['Mô phỏng', 'Simulator'], tabMet: ['Phương pháp & dữ liệu', 'Method & data'],
     brief: ['Cho ALCO/CFO ngân hàng: giảm lãi suất cho vay bao nhiêu mà vẫn giữ được lợi nhuận, an toàn vốn và đệm dự phòng? So sánh với {n} ngân hàng thương mại niêm yết, {y}.',
             'For a bank\'s ALCO/CFO: how far can lending rates be cut while keeping profit, capital and provisioning buffers? Benchmarked against {n} listed commercial banks, {y}.'],
     mdTitle: ['Mô hình đề xuất: công thức kế toán + kinh tế lượng', 'Proposed model: accounting formulas + econometrics'],
@@ -418,7 +404,6 @@
     bpHint: ['Mức giảm lãi suất cho vay, tính bằng điểm cơ bản: 10 bp = 0,1 điểm %', 'Lending-rate cut in basis points: 10 bp = 0.1 percentage point'],
     monthsU: ['tháng', 'months'],
     mxTitle: ['Mức giảm × kịch bản vĩ mô', 'Rate cut × macro scenario'],
-    whoTitle: ['Ai trả cho khoản người vay tiết kiệm?', 'Who pays for borrowers\' savings?'],
     qaTitle: ['Kiểm tra chất lượng dữ liệu', 'Data quality checks'], qaDesc: ['Tự chạy lại cho ngân hàng và năm đang chọn', 'Re-run for the selected bank and year'],
     fmTitle: ['Công thức', 'Formulas'], fmDesc: ['s là mức giảm (bp); mọi tiền tệ tính bằng tỷ VND', 's is the cut (bp); all money in VND bn'],
     limTitle: ['Giả định và hạn chế', 'Assumptions and limitations'],
@@ -435,12 +420,12 @@
     alpha: ['Dư nợ được giảm lãi', 'Loans repriced', 'Tỷ lệ dư nợ cho vay khách hàng được áp mức lãi mới.', 'Share of customer loans that get the lower rate.'],
     months: ['Số tháng hiệu lực bình quân', 'Average months in effect', 'Trung bình bao nhiêu tháng trong 12 tháng tới khoản vay hưởng lãi mới. 12 = áp ngay cho toàn bộ (cận trên); khoản vay lãi cố định chỉ đổi khi đến kỳ định lại.',
              'Average months of the next 12 in which loans carry the new rate. 12 = all loans repriced at once (upper bound); fixed-rate loans change only at repricing.'],
-    phi: ['Chi phí vốn giảm theo', 'Funding cost offset', 'Phần khoản giảm lãi được bù lại vì ngân hàng trả lãi tiền gửi thấp hơn. Mặc định lấy từ dữ liệu: khi riêng một ngân hàng đổi lãi, khoảng {phi} được bù (tab Phân tích). 0% = xấu nhất; gần 100% chỉ khi cả thị trường cùng giảm lãi.',
-          'Share of the cut recovered because the bank pays depositors less. Default from data: when one bank moves alone, about {phi} is recovered (Data analysis tab). 0% = worst case; close to 100% only in a market-wide easing.'],
-    tax: ['Thuế suất TNDN', 'Corporate tax rate', 'Thuế thu nhập doanh nghiệp, 20% ở Việt Nam.', 'Corporate income tax, 20% in Vietnam.'],
-    k: ['LNST giữ lại vào vốn', 'Profit retained in capital', 'Phần lợi nhuận không chia cổ tức, được cộng vào vốn tự có để tính CAR.', 'Share of profit not paid out, added to regulatory capital for CAR.'],
-    q: ['Mục tiêu giữ LNST', 'Profit retention target', 'Tỷ lệ LNST năm nền ngân hàng muốn giữ lại sau khi giảm lãi (đề xuất ALCO: 90%).', 'Share of base-year profit the bank wants to keep after the cut (ALCO proposal: 90%).'],
-    macro: ['Kịch bản vĩ mô', 'Macro scenario', 'Kịch bản tăng trưởng kinh tế, đi vào mô phỏng qua chi phí dự phòng (mô hình panel ở tab Phân tích).', 'Economic-growth scenario; enters the simulation through provisions (panel model in the Data analysis tab).'],
+    phi: ['Chi phí vốn giảm theo', 'Funding cost offset', 'Phần khoản giảm lãi được bù lại vì ngân hàng trả lãi tiền gửi thấp hơn. Mặc định lấy từ dữ liệu: khi riêng một ngân hàng đổi lãi, khoảng {phi} được bù (bảng "Mô hình đề xuất" ở tab Phương pháp). 0% = xấu nhất; gần 100% chỉ khi cả thị trường cùng giảm lãi.',
+          'Share of the cut recovered because the bank pays depositors less. Default from data: when one bank moves alone, about {phi} is recovered ("Proposed model" table, Method tab). 0% = worst case; close to 100% only in a market-wide easing.'],
+    tax: ['Thuế suất TNDN', 'Corporate tax rate', 'Thuế thu nhập doanh nghiệp, 20% ở Việt Nam. Cố định trong mô phỏng.', 'Corporate income tax, 20% in Vietnam. Fixed in the simulator.'],
+    k: ['LNST giữ lại vào vốn', 'Profit retained in capital', 'Phần lợi nhuận không chia cổ tức, được cộng vào vốn tự có để tính CAR. Cố định 100% (thận trọng: toàn bộ phần LNST giảm làm giảm vốn).', 'Share of profit not paid out, added to regulatory capital for CAR. Fixed at 100% (conservative: the whole profit loss reduces capital).'],
+    q: ['Mục tiêu giữ LNST', 'Profit retention target', 'Tỷ lệ LNST năm nền ngân hàng muốn giữ lại sau khi giảm lãi (đề xuất ALCO: 90%). Cố định 90% trong mô phỏng.', 'Share of base-year profit the bank wants to keep after the cut (ALCO proposal: 90%). Fixed at 90% in the simulator.'],
+    macro: ['Kịch bản vĩ mô', 'Macro scenario', 'Kịch bản tăng trưởng kinh tế, đi vào mô phỏng qua chi phí dự phòng (mô hình panel, tab Phương pháp).', 'Economic-growth scenario; enters the simulation through provisions (panel model, Method tab).'],
     nim: ['NIM', 'NIM', 'Biên lãi ròng: thu nhập lãi thuần / tổng tài sản bình quân.', 'Net interest margin: net interest income / average total assets.'],
     ppop: ['LN trước dự phòng', 'Pre-provision profit', 'Lợi nhuận thuần từ hoạt động kinh doanh trước chi phí dự phòng rủi ro tín dụng.', 'Operating profit before credit-loss provisions.'],
     bn: ['tỷ đồng', 'VND bn', '1 tỷ đồng = 1 tỷ (10⁹) VND. Mọi số tiền trên dashboard tính bằng đơn vị này.', '1 VND bn = 1 billion (10⁹) Vietnamese dong (tỷ đồng). All money on the dashboard is in this unit.'],
@@ -744,25 +729,6 @@
     hit.addEventListener('click', () => { if (hb != null) { hideTip(); setBp(hb); } });
   }
 
-  // ---------- ai trả ----------
-  function drawWho(s, desc) {
-    $('who-desc').textContent = desc || L('Chia khoản tiền lãi người vay được giảm theo bên gánh chịu, trong 12 tháng', 'Who bears the interest borrowers no longer pay, over 12 months');
-    const parts = [
-      { k: 'bank', name: L('Cổ đông ngân hàng', 'Bank shareholders'), note: L('LNST giảm', 'Lower profit after tax'), v: s.dPAT, c: 'var(--c-bank)' },
-      { k: 'dep', name: L('Người gửi tiền', 'Depositors'), note: L('Ngân hàng trả lãi tiền gửi thấp hơn', 'Bank pays lower deposit rates'), v: s.dep, c: 'var(--c-dep)' },
-      { k: 'tax', name: L('Ngân sách nhà nước', 'State budget'), note: L('Thuế TNDN thu ít hơn', 'Less corporate tax collected'), v: s.tax, c: 'var(--c-tax)' },
-    ];
-    const Tt = s.save || 1;
-    $('who-pays').innerHTML = s.save <= 0 ? `<p class="desc">${L('Chọn mức giảm lớn hơn 0 bp để xem phân bổ.', 'Pick a cut above 0 bp to see the split.')}</p>` : `
-      <div class="split" role="img" aria-label="${L('Phân bổ khoản tiết kiệm của người vay', 'Split of borrower savings')}">${parts.filter(p => p.v > 0).map(p => `<div style="width:${p.v / Tt * 100}%;background:${p.c}" data-tip="${esc(`<b>${p.name}</b><br>${ty(p.v)} ${BN()} · ${pct(p.v / Tt)}<br>${p.note}`)}"></div>`).join('')}</div>
-      <div class="split-legend">${parts.map(p => `<div class="it"><span class="sw" style="background:${p.c}"></span>
-        <span>${p.name}<small>${p.note}</small></span><span class="v">${ty(p.v)} ${BN()}</span><span class="p">${pct(p.v / Tt, 0)}</span></div>`).join('')}</div>
-      <div class="total-row"><span>${L('Tổng = người vay tiết kiệm', 'Total = borrower savings')}</span><b class="num">${ty(s.save)} ${BN()}</b></div>
-      <p class="desc" style="margin-top:10px">${S.phi === 0
-        ? L('Bù chi phí vốn = 0%: kịch bản xấu nhất, cổ đông và ngân sách gánh toàn bộ.', 'Funding offset = 0%: worst case, shareholders and the budget bear it all.')
-        : L(`Bù chi phí vốn ${pct(S.phi, 0)}: phần này được bù bằng việc trả lãi tiền gửi thấp hơn.`, `Funding offset ${pct(S.phi, 0)}: this share is recovered through lower deposit rates.`)}</p>`;
-  }
-
   // ---------- so sánh ngân hàng ----------
   const CMP = {
     pat: { t: () => L('Ngân hàng nào mất nhiều lợi nhuận nhất?', 'Which banks lose the most profit?'), get: s => s.patChg, fmt: v => sPct(v), asc: true, d: () => L('Δ LNST ở cùng mức giảm. Âm hơn = nhạy hơn.', 'Δ PAT at the same cut. More negative = more sensitive.') },
@@ -850,206 +816,6 @@
     const sh = sc && sc.shocks.gdp_growth != null ? ` (GDP ${sNum(sc.shocks.gdp_growth * 100)} ${L('điểm %', 'pp')})` : '';
     $('macro-hint').textContent = sc ? `${LX(sc, 'desc')}${sh}.` + (sc.dllp ? L(` Theo mô hình panel, chi phí dự phòng ${sc.dllp > 0 ? 'tăng' : 'giảm'} ${f1.format(Math.abs(sc.dllp * 1e4))} bp trên dư nợ.`,
                                                                                   ` Per the panel model, provisions ${sc.dllp > 0 ? 'rise' : 'fall'} by ${f1.format(Math.abs(sc.dllp * 1e4))} bp of loans.`) : '') : '';
-  }
-
-  // ================== PHÂN TÍCH ==================
-  function scatter(el, pts, o) {
-    const w = W(el), h = o.h || Math.round(Math.max(320, Math.min(460, w * 0.4))), m = { t: 14, r: 18, b: 44, l: 56 };
-    // o.yMax: điểm vượt trần được vẽ ở mép trên bằng tam giác, nhãn ghi giá trị thật
-    const yCap = o.yMax ?? Infinity;
-    const xs = pts.map(p => p.x), ys = pts.map(p => Math.min(p.y, yCap));
-    const xt = ticks(Math.min(...xs, o.x0 ?? Infinity), Math.max(...xs), 6), yt = ticks(Math.min(...ys, o.y0 ?? Infinity), Math.max(...ys), 5);
-    const X0 = xt[0], X1 = xt[xt.length - 1], Y0 = yt[0], Y1 = yt[yt.length - 1];
-    const x = v => m.l + (v - X0) / (X1 - X0) * (w - m.l - m.r), y = v => m.t + (1 - (v - Y0) / (Y1 - Y0)) * (h - m.t - m.b);
-    let g = '';
-    yt.forEach(v => g += `<line x1="${m.l}" x2="${w - m.r}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text class="t-tick" x="${m.l - 8}" y="${y(v) + 4}" text-anchor="end">${o.fy(v)}</text>`);
-    xt.forEach(v => g += `<text class="t-tick" x="${x(v)}" y="${h - m.b + 16}" text-anchor="middle">${o.fx(v)}</text>`);
-    if (X0 < 0 && X1 > 0) g += `<line x1="${x(0)}" x2="${x(0)}" y1="${m.t}" y2="${h - m.b}" stroke="var(--line-2)"/>`;
-    if (Y0 < 0 && Y1 > 0) g += `<line x1="${m.l}" x2="${w - m.r}" y1="${y(0)}" y2="${y(0)}" stroke="var(--line-2)"/>`;
-    g += `<text class="t-tick" x="${(m.l + w - m.r) / 2}" y="${h - 4}" text-anchor="middle">${o.xl}</text>
-      <text class="t-tick" transform="translate(12 ${(m.t + h - m.b) / 2}) rotate(-90)" text-anchor="middle">${o.yl}</text>`;
-    if (o.lines) o.lines.forEach(Ln => {
-      const xa = Math.max(X0, Ln.xa ?? X0), xb = Math.min(X1, Ln.xb ?? X1);
-      // lấy mẫu 80 điểm để vẽ được cả đường cong (vd. hyperbol độ nhạy = k / ROA)
-      const d = Array.from({ length: 81 }, (_, i) => { const v = xa + (xb - xa) * i / 80; return (i ? 'L' : 'M') + x(v).toFixed(1) + ',' + y(Ln.f(v)).toFixed(1); }).join('');
-      g += `<path d="${d}" fill="none" stroke="${Ln.c}" stroke-width="2" ${Ln.dash ? 'stroke-dasharray="6 5"' : ''}/>`;
-      if (Ln.label) g += `<text class="t-lbl" x="${x(xb) - 4}" y="${y(Ln.f(xb)) - 8}" text-anchor="end" style="fill:${Ln.c}">${Ln.label}</text>`;
-    });
-    pts.forEach(p => {
-      const sel = p.sel, over = p.y > yCap, px = x(p.x), py = y(Math.min(p.y, yCap));
-      g += over
-        ? `<path d="M${px - 6},${py + 5} L${px},${py - 5} L${px + 6},${py + 5} Z" fill="var(--accent)" data-tip="${esc(p.tip)}"/>`
-        : `<circle cx="${px}" cy="${py}" r="${sel ? 7 : 5}" fill="var(--accent)" fill-opacity="${sel ? 1 : 0.35}" stroke="${sel ? 'var(--card)' : 'none'}" stroke-width="2" data-tip="${esc(p.tip)}"/>`;
-      if (p.label || over) g += `<text class="${sel ? 't-strong' : 't-lbl'}" x="${px + 10}" y="${py + 4}">${p.label || ''}${over ? ` ${o.fy(p.y)}${L(', vượt trục', ', off axis')}` : ''}</text>`;
-    });
-    el.innerHTML = `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${esc(o.aria)}">${g}</svg>`;
-  }
-
-  function drawAnalysis() {
-    const P = AN.passthrough, Sn = AN.sensitivity, NR = AN.nim_roa, C = AN.corr;
-    const root = $('ana-root');
-    const drv = Object.values(Sn.drivers).sort((a, c) => Math.abs(c.rho) - Math.abs(a.rho));
-    const bMkt = coefOf(PASS_MKT, 'd_yield') ?? P.beta, bBank = coefOf(PASS_BANK, 'd_yield');
-    const ROA_M = ECON.models.find(m => m.id === 'roa_det'), bRoa = coefOf(ROA_M, 'nim');
-    root.innerHTML = `
-      <article class="card finding">
-        <div>
-          <h2>${L('Chi phí vốn chỉ đi theo 1:1 khi cả thị trường cùng đổi lãi suất', 'Funding cost follows 1:1 only when the whole market moves')}</h2>
-          <div class="big">${f2.format(bMkt)}${bBank != null ? ` → ${f2.format(bBank)}` : ''}</div>
-          <div class="stat">${L('Cả thị trường cùng đổi lãi → riêng một ngân hàng đổi lãi (hồi quy panel, có hiệu ứng cố định năm)', 'Whole market moves → one bank moves alone (panel regression with year fixed effects)')}<br>
-            n = ${P.n} ${L('cặp ngân hàng-năm', 'bank-years')}, ${P.banks} ${L('ngân hàng', 'banks')}, ${P.years[0]}–${P.years[1]}</div>
-          <div class="so-what"><b>${L('Ý nghĩa cho quyết định', 'What it means for the decision')}</b>${bBank != null
-            ? L(`Nếu ngân hàng tự giảm lãi cho vay một mình, chỉ khoảng ${pct(bBank, 0)} khoản giảm được bù bằng chi phí vốn thấp hơn; mô phỏng dùng mức này làm mặc định. Nếu NHNN và cả thị trường cùng giảm lãi, phần bù gần 100% và thiệt hại lợi nhuận nhỏ hơn nhiều.`,
-                `If a bank cuts lending rates on its own, only about ${pct(bBank, 0)} of the cut is recovered through lower funding cost; the simulator uses this as its default. If the SBV and the whole market ease together, the offset is close to 100% and the profit hit is much smaller.`)
-            : L(`Mỗi 100 bp lợi suất tài sản giảm thường đi kèm khoảng ${f0.format(P.beta * 100)} bp chi phí vốn giảm khi cả thị trường cùng đổi lãi.`, `Each 100 bp fall in asset yield has come with about ${f0.format(P.beta * 100)} bp lower funding cost in market-wide moves.`)}</div>
-          <div class="caveat">${L(`Biểu đồ: từng ngân hàng-năm, đường đỏ là hồi quy gộp (β = ${f2.format(P.beta)}, CI 95% bootstrap theo cụm ngân hàng [${f2.format(P.ci95[0])}; ${f2.format(P.ci95[1])}]). Bảng đầy đủ ở phần mô hình bên dưới. Đây là tương quan, không phải bằng chứng nhân quả.`,
-                                  `Chart: each bank-year; red line is the pooled fit (β = ${f2.format(P.beta)}, 95% bank-cluster bootstrap CI [${f2.format(P.ci95[0])}; ${f2.format(P.ci95[1])}]). Full tables in the models section below. Correlation, not causal proof.`)}</div>
-        </div>
-        <div>
-          <div class="chart" id="an-pass"></div>
-          <div class="legend"><span><i style="background:var(--accent);opacity:.5"></i>${L('Một ngân hàng-năm', 'One bank-year')}</span><span><i style="background:var(--c-bank)"></i>${L('Đường hồi quy', 'Fitted line')}</span><span><i style="background:var(--ink-2)"></i>${L('Đường 45° (bù đủ)', '45° line (full offset)')}</span></div>
-          <div class="chart" id="an-year" style="margin-top:16px"></div>
-        </div>
-      </article>
-
-      <article class="card finding">
-        <div>
-          <h2>${L('ROA, không phải quy mô cho vay, quyết định ai chịu được giảm lãi', 'Profitability, not loan book size, decides who can afford a cut')}</h2>
-          <div class="big">ρ = ${f2.format(Sn.drivers.roa.rho)}</div>
-          <div class="stat">${L(`Spearman giữa ROA và % LNST mất cho mỗi 10 bp, ${Sn.year}, n = ${Sn.drivers.roa.n}`, `Spearman between ROA and % of profit lost per 10 bp, ${Sn.year}, n = ${Sn.drivers.roa.n}`)}</div>
-          <table style="margin-top:12px"><thead><tr><th>${L('Đặc điểm ngân hàng', 'Bank characteristic')}</th><th>${L('ρ với độ nhạy', 'ρ with sensitivity')}</th></tr></thead><tbody>
-            ${drv.map(d => `<tr><td>${LX(d, 'label')}</td><td>${sNum(d.rho, 2)}</td></tr>`).join('')}</tbody></table>
-          <div class="so-what"><b>${L('Ý nghĩa cho quyết định', 'What it means for the decision')}</b>${L('Ngân hàng có ROA thấp, NIM mỏng, CIR cao mất tỷ lệ lợi nhuận lớn hơn nhiều ở cùng mức giảm. Một chương trình giảm lãi đồng loạt sẽ dồn gánh nặng vào nhóm ngân hàng yếu; nên cân nhắc mức giảm khác nhau theo khả năng sinh lời.',
-            'Banks with low ROA, thin NIM and high cost/income lose a much larger share of profit at the same cut. A uniform rate-cut programme loads the burden on weaker banks; cuts should be sized to profitability.')}</div>
-          <div class="caveat">${L(`Quan hệ với ROA một phần là cơ học: độ nhạy = (Cho vay/TTS) × (1 − thuế) × s / ROA. Điều đáng chú ý là Cho vay/TTS gần như không tương quan (ρ = ${sNum(Sn.drivers.loans_ta.rho, 2)}), nên khác biệt đến từ khả năng sinh lời. Mẫu nhỏ (${Sn.drivers.roa.n} ngân hàng), không suy luận nhân quả.`,
-            `Partly mechanical: sensitivity = (loans/assets) × (1 − tax) × s / ROA. Notably, loans/assets is almost uncorrelated (ρ = ${sNum(Sn.drivers.loans_ta.rho, 2)}), so differences come from profitability. Small sample (${Sn.drivers.roa.n} banks); no causal claim.`)}</div>
-        </div>
-        <div><div class="chart" id="an-sens"></div>
-          <div class="legend"><span><i style="background:var(--accent)"></i>${L('Ngân hàng đang chọn', 'Selected bank')}</span><span><i style="background:var(--accent);opacity:.35"></i>${L('Ngân hàng khác', 'Other banks')}</span><span><i style="background:var(--c-bank)"></i>${L('Đường mô hình (Cho vay/TTS trung vị)', 'Model line (median loans/assets)')}</span></div></div>
-      </article>
-
-      <article class="card finding">
-        <div>
-          <h2>${L('Mô phỏng là cận trên của thiệt hại lợi nhuận', 'The simulator gives an upper bound on the profit hit')}</h2>
-          <div class="big">${f2.format(NR.beta)}${bRoa != null ? ` → ${f2.format(bRoa)}` : ''}</div>
-          <div class="stat">${L(`bp ROA đổi theo mỗi 1 bp NIM đổi: ước lượng đơn giản trong cùng ngân hàng → mô hình có hiệu ứng năm và biến kiểm soát. Mô phỏng giả định 0,8 = (1 − thuế).`,
-                                `bp change in ROA per 1 bp change in NIM: simple within-bank estimate → model with year effects and controls. The simulator assumes 0.8 = (1 − tax).`)}</div>
-          <div class="so-what"><b>${L('Ý nghĩa cho quyết định', 'What it means for the decision')}</b>${L(`Ước lượng đơn giản (${f2.format(NR.beta)}) sát mức 0,8 mô phỏng dùng; khi kiểm soát chu kỳ, chi phí và rủi ro${bRoa != null ? `, chỉ còn ${f2.format(bRoa)}` : ''}. Ngân hàng thường bù được một phần NIM mất, nên số LNST giảm trên dashboard là mức xấu. Cùng với mặc định 12 tháng hiệu lực, kết quả nghiêng về thận trọng.`,
-            `The simple estimate (${f2.format(NR.beta)}) is close to the simulator's 0.8; controlling for the cycle, costs and risk${bRoa != null ? ` it falls to ${f2.format(bRoa)}` : ''}. Banks usually recover part of a NIM loss, so the profit decline shown is a bad case. Together with the 12-month default, results lean conservative.`)}</div>
-          <div class="caveat">${L(`CI 95% của ước lượng đơn giản [${f2.format(NR.ci95[0])}; ${f2.format(NR.ci95[1])}], n = ${NR.n}. NIM và ROA tính trên tổng tài sản bình quân.`, `95% CI of the simple estimate [${f2.format(NR.ci95[0])}; ${f2.format(NR.ci95[1])}], n = ${NR.n}. NIM and ROA use average total assets.`)}</div>
-        </div>
-        <div>
-          <h2 style="font-size:14px">${L('Tương quan giữa các chỉ số ngân hàng', 'Correlations between bank ratios')}</h2>
-          <p class="desc">${L('Spearman ρ, gộp ngân hàng × năm có LNST dương. Rê chuột để xem n. Xanh = cùng chiều, đỏ = ngược chiều.', 'Spearman ρ, pooled bank-years with positive profit. Hover for n. Blue = positive, red = negative.')}</p>
-          <div class="chart" id="an-corr" style="margin-top:8px"></div>
-        </div>
-      </article>${econHtml()}`;
-
-    // truyền dẫn
-    scatter($('an-pass'), P.points.map(p => ({ x: p.x, y: p.y, sel: p.bank === S.bank,
-      tip: L(`<b>${p.bank} ${p.year}</b><br>Δ lợi suất tài sản ${sNum(p.x)} bp<br>Δ chi phí vốn ${sNum(p.y)} bp`, `<b>${p.bank} ${p.year}</b><br>Δ asset yield ${sNum(p.x)} bp<br>Δ funding cost ${sNum(p.y)} bp`) })), {
-      xl: L('Δ lợi suất tài sản so với năm trước (bp)', 'Δ asset yield vs prior year (bp)'), yl: L('Δ chi phí vốn (bp)', 'Δ funding cost (bp)'), fx: v => f0.format(v), fy: v => f0.format(v), aria: L('Biểu đồ phân tán truyền dẫn lãi suất', 'Rate pass-through scatter'),
-      lines: [{ f: v => v, c: 'var(--ink-2)', dash: true }, { f: v => P.alpha_bp + P.beta * v, c: 'var(--c-bank)', label: `β = ${f2.format(P.beta)}` }] });
-
-    // theo năm: trung vị
-    (() => {
-      const el = $('an-year'), w = W(el), h = 190, m = { t: 22, r: 10, b: 26, l: 44 }, D = AN.by_year;
-      const vals = D.flatMap(d => [d.d_yield, d.d_cost]), yt = ticks(Math.min(0, ...vals), Math.max(0, ...vals), 4);
-      const Y0 = yt[0], Y1 = yt[yt.length - 1], y = v => m.t + (1 - (v - Y0) / (Y1 - Y0)) * (h - m.t - m.b);
-      const band = (w - m.l - m.r) / D.length, bw = Math.min(16, band / 3);
-      let g = `<text class="t-strong" x="${m.l}" y="12">${L('Trung vị theo năm (bp)', 'Median by year (bp)')}</text>`;
-      yt.forEach(v => g += `<line x1="${m.l}" x2="${w - m.r}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text class="t-tick" x="${m.l - 6}" y="${y(v) + 4}" text-anchor="end">${f0.format(v)}</text>`);
-      g += `<line x1="${m.l}" x2="${w - m.r}" y1="${y(0)}" y2="${y(0)}" stroke="var(--line-2)"/>`;
-      D.forEach((d, i) => {
-        const cx = m.l + band * i + band / 2;
-        [[d.d_yield, 'var(--accent)', L('Lợi suất tài sản', 'Asset yield'), -1], [d.d_cost, 'var(--c-tax)', L('Chi phí vốn', 'Funding cost'), 1]].forEach(([v, c, n, sd]) => {
-          const top = y(Math.max(0, v)), bh = Math.abs(y(v) - y(0));
-          g += `<rect x="${cx + (sd < 0 ? -bw - 1 : 1)}" y="${top}" width="${bw}" height="${Math.max(1, bh)}" rx="3" fill="${c}" data-tip="${esc(`<b>${d.year}</b> · ${n}<br>${L('Trung vị', 'Median')} Δ ${sNum(v)} bp`)}"/>`;
-        });
-        g += `<text class="t-tick" x="${cx}" y="${h - 8}" text-anchor="middle">${d.year}</text>`;
-      });
-      el.innerHTML = `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${L('Trung vị thay đổi lợi suất và chi phí vốn theo năm', 'Median change in yield and funding cost by year')}">${g}</svg>
-        <div class="legend"><span><i style="background:var(--accent)"></i>${L('Δ lợi suất tài sản', 'Δ asset yield')}</span><span><i style="background:var(--c-tax)"></i>${L('Δ chi phí vốn', 'Δ funding cost')}</span></div>`;
-    })();
-
-    // độ nhạy theo ROA; cùng mẫu số với ROA (TTS bình quân) để đường mô hình khớp định nghĩa của điểm
-    const medLT = Sn.points.map(p => p.loans_avg_ta).sort((a, c) => a - c)[Math.floor(Sn.points.length / 2)];
-    const sensPts = Sn.points.filter(p => p.roa > 0);
-    const bySens = [...sensPts].sort((a, c) => c.sens10 - a.sens10), byRoa = [...sensPts].sort((a, c) => c.roa - a.roa);
-    const named = new Set([...bySens.slice(0, 2), bySens[3], byRoa[0], byRoa[2]].map(p => p.bank));  // vài điểm đại diện, tránh chồng nhãn
-    scatter($('an-sens'), sensPts.map(p => ({ x: p.roa * 100, y: p.sens10 * 100, sel: p.bank === S.bank,
-      label: p.bank === S.bank || named.has(p.bank) ? p.bank : '',
-      tip: L(`<b>${p.bank} ${Sn.year}</b><br>ROA ${pct(p.roa, 2)}<br>Cho vay/TTS ${pct(p.loans_ta)}<br>Mất ${pct(p.sens10, 2)} LNST mỗi 10 bp`, `<b>${p.bank} ${Sn.year}</b><br>ROA ${pct(p.roa, 2)}<br>Loans/assets ${pct(p.loans_ta)}<br>Loses ${pct(p.sens10, 2)} of PAT per 10 bp`) })), {
-      xl: `ROA ${Sn.year} (%)`, yl: L('% LNST mất mỗi 10 bp', '% of PAT lost per 10 bp'), fx: v => f1.format(v), fy: v => f0.format(v) + '%', x0: 0, y0: 0, yMax: 20, aria: L('ROA và độ nhạy LNST', 'ROA and profit sensitivity'),
-      // y(%) = 100 × (Cho vay/TTS) × 10 bp × (1 − thuế) / ROA = (Cho vay/TTS) × 8 / ROA(%)
-      lines: [{ f: v => medLT * 8 / v, xa: medLT * 8 / 20, c: 'var(--c-bank)', dash: true }] });
-
-    // ma trận tương quan
-    (() => {
-      const labels = S.lang === 'en' && C.labels_en ? C.labels_en : C.labels;
-      const el = $('an-corr'), n = C.vars.length, w = W(el), lw = 130, cell = Math.min(46, (w - lw) / n), h = lw * 0.2 + cell * n + 110;
-      const col = v => { if (v == null) return 'var(--card-2)'; const a = Math.min(1, Math.abs(v));
-        return `color-mix(in srgb, ${v >= 0 ? 'var(--accent)' : 'var(--c-bank)'} ${Math.round(a * 85)}%, var(--card-2))`; };
-      let g = '';
-      labels.forEach((l, i) => {
-        g += `<text class="t-lbl" x="${lw - 6}" y="${i * cell + cell / 2 + 4}" text-anchor="end">${l}</text>`;
-        g += `<text class="t-lbl" transform="translate(${lw + i * cell + cell / 2 + 4} ${n * cell + 8}) rotate(-50)" text-anchor="end">${l}</text>`;
-        labels.forEach((l2, j) => {
-          const v = C.matrix[i][j];
-          g += `<rect x="${lw + j * cell + 1}" y="${i * cell + 1}" width="${cell - 2}" height="${cell - 2}" rx="4" fill="${col(v)}" data-tip="${esc(`<b>${l} × ${l2}</b><br>ρ = ${v == null ? '–' : sNum(v, 2)} · n = ${C.n[i][j]}`)}"/>`;
-          if (v != null && i !== j && Math.abs(v) >= 0.5 && cell >= 26) g += `<text x="${lw + j * cell + cell / 2}" y="${i * cell + cell / 2 + 4}" text-anchor="middle" style="font-size:10px;fill:${Math.abs(v) > 0.6 ? '#fff' : 'var(--ink)'};pointer-events:none" class="num">${f1.format(v)}</text>`;
-        });
-      });
-      el.innerHTML = `<svg viewBox="0 0 ${Math.max(w, lw + cell * n)} ${h}" role="img" aria-label="${L('Ma trận tương quan Spearman', 'Spearman correlation matrix')}">${g}</svg>`;
-    })();
-  }
-
-  // kết quả hồi quy panel từ scripts/econometrics.py; hiển thị mọi mô hình có trong econ.js
-  function econHtml() {
-    const E = ECON;
-    if (!E.models.length) return '';
-    const sig = new Intl.NumberFormat(S.lang === 'en' ? 'en-US' : 'vi-VN', { maximumSignificantDigits: 3 });
-    const fc = v => (v < 0 ? '−' : '') + sig.format(Math.abs(v));
-    const stars = p => p < 0.01 ? '***' : p < 0.05 ? '**' : p < 0.1 ? '*' : '';
-    const fp = p => p < 0.001 ? '<' + nf(3).format(0.001) : f2.format(p) === f2.format(0) ? nf(3).format(p) : f2.format(p);
-    const COV = { clustered: L('SE cụm theo ngân hàng', 'bank-clustered SE'), kernel: 'Driscoll-Kraay SE', robust: 'robust SE' };
-    const COV_S = { clustered: L('cụm NH', 'cluster'), kernel: 'D-K', robust: 'robust' };
-    // thanh CI 95%: thang đối xứng quanh 0 của riêng từng dòng, để thấy ngay CI có cắt 0 không
-    const ciBar = c => {
-      const w = 110, h = 18, R = Math.max(Math.abs(c.lo), Math.abs(c.hi)) * 1.15 || 1, x = v => w / 2 + v / R * (w / 2 - 6);
-      const col = c.p < 0.05 ? 'var(--accent)' : 'var(--muted)';
-      return `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" aria-hidden="true"><line x1="${w / 2}" x2="${w / 2}" y1="1" y2="${h - 1}" stroke="var(--line-2)"/>
-        <line x1="${x(c.lo)}" x2="${x(c.hi)}" y1="${h / 2}" y2="${h / 2}" stroke="${col}" stroke-width="2" stroke-linecap="round"/>
-        <circle cx="${x(c.b)}" cy="${h / 2}" r="4" fill="${col}"/></svg>`;
-    };
-    const haus = h => h.p == null
-      ? L(`Hausman FE vs RE: χ²(${h.df}) âm (${f1.format(h.stat)}), kiểm định không dùng được ở mẫu này; giữ FE vì luôn nhất quán`, `Hausman FE vs RE: negative χ²(${h.df}) (${f1.format(h.stat)}), test not usable in this sample; FE kept as it is always consistent`)
-      : `Hausman FE vs RE: χ²(${h.df}) = ${f2.format(h.stat)}, p = ${fp(h.p)} ${h.p < 0.05 ? L('→ ưu tiên FE', '→ prefer FE') : L('→ không bác bỏ RE; FE vẫn nhất quán', '→ RE not rejected; FE still consistent')}`;
-    const block = m => `<section class="econ">
-      <h3>${esc(LX(m, 'title'))}</h3>
-      ${m.so_what ? `<div class="so-what" style="margin:8px 0 10px"><b>${L('Kết luận', 'Takeaway')}</b>${esc(LX(m, 'so_what'))}</div>` : ''}
-      <code class="spec">${esc(m.spec)}</code>
-      ${m.id === E.scenario_model ? ` ${badge('good', '→', L('Dùng cho kịch bản vĩ mô', 'Drives the macro scenarios'))}` : ''}
-      <div class="stat">${L('Biến phụ thuộc', 'Dependent variable')}: ${esc(LX(m, 'y_label'))} · n = ${m.n}, ${m.banks} ${L('ngân hàng', 'banks')}, ${m.years[0]}–${m.years[1]} · R² within = ${f2.format(m.r2_within)} · ${COV[m.cov]}${m.trim ? L(` · bỏ ${m.trim}% đuôi mỗi phía`, ` · ${m.trim}% tails trimmed`) : ''}</div>
-      <div class="scroll"><table><thead><tr><th>${L('Biến', 'Variable')}</th><th>${L('Hệ số', 'Coef.')}</th><th>SE</th><th>p (${COV_S[m.cov]})</th>${m.alt_cov ? `<th>p (${COV_S[m.alt_cov]})</th>` : ''}<th>CI 95% (${L('0 ở giữa', '0 centred')})</th></tr></thead><tbody>
-        ${m.coefs.map(c => `<tr data-tip="${esc(`<b>${LX(c, 'label')}</b>${c.macro ? L(' (vĩ mô)', ' (macro)') : ''}<br>${L('Hệ số', 'Coef.')} ${fc(c.b)} · t = ${f2.format(c.t)}<br>CI 95% [${fc(c.lo)}; ${fc(c.hi)}]`)}">
-          <td>${esc(LX(c, 'label'))}${c.macro ? ` <span style="color:var(--muted);font-size:11px">${L('vĩ mô', 'macro')}</span>` : ''}</td><td>${fc(c.b)}${stars(c.p)}</td><td>${fc(c.se)}</td><td>${fp(c.p)}</td>${m.alt_cov ? `<td>${fp(c.p_alt)}</td>` : ''}<td class="ci">${ciBar(c)}</td></tr>`).join('')}
-      </tbody></table></div>
-      ${m.hausman && m.x.length > 1 ? `<div class="stat">${haus(m.hausman)}</div>` : ''}
-      <div class="caveat">${esc(LX(m, 'note'))}</div>
-    </section>`;
-    const M = E.macro, macroRow = M ? `<div class="macro-grid">${M.series.map(s => `<div><div class="k-label">${esc(LX(s, 'label'))}</div>
-        <div class="num" style="font-size:20px;font-weight:700">${f1.format(s.values[s.values.length - 1])}% <small style="font-size:12px;color:var(--muted);font-weight:400">${M.years[M.years.length - 1]}</small></div>
-        ${spark(s.values, M.years, v => f2.format(v) + '%', { aria: LX(s, 'label') })}</div>`).join('')}</div>
-      <p class="caveat">${L(`Nguồn: ${esc(M.source)}. Biến vĩ mô giống nhau cho mọi ngân hàng trong một năm, nên mô hình chỉ có khoảng 10 điểm thời gian (2016–2025) để ước lượng hệ số vĩ mô; năm ${M.years[0]} chỉ dùng làm năm gốc.`,
-                           `Source: ${esc(M.source_en || M.source)}. Macro variables are the same for every bank in a year, so the models have only about 10 time points (2016–2025) to estimate macro effects; ${M.years[0]} is used only as a base year.`)}</p>` : '';
-    return `<article class="card">
-      <div class="card-head"><div><h2>${L('Bối cảnh vĩ mô và mô hình kinh tế lượng', 'Macro context and econometric models')}</h2>
-        <p class="desc">${L('Hồi quy panel ngân hàng × năm (PanelOLS, thư viện linearmodels). FE = hiệu ứng cố định; D-K = sai số Driscoll-Kraay; cụm NH = sai số cụm theo ngân hàng. *** p &lt; 0,01 · ** p &lt; 0,05 · * p &lt; 0,1. Chấm xanh: có ý nghĩa ở mức 5%.',
-                             'Bank × year panel regressions (PanelOLS, linearmodels). FE = fixed effects; D-K = Driscoll-Kraay SE; cluster = bank-clustered SE. *** p &lt; 0.01 · ** p &lt; 0.05 · * p &lt; 0.1. Blue dot: significant at 5%.')}</p></div></div>
-      ${macroRow}
-      <div class="econ-grid">${E.models.map(block).join('')}</div>
-    </article>`;
   }
 
   // ================== PHƯƠNG PHÁP ==================
@@ -1306,10 +1072,7 @@
     drawHeadAll(ys, R, X);
     if (S.tab === 'sim') {
       drawKpisAll(ys, R, X); drawSensAll(ys, R); drawHeat(); drawScenYears(ys, R, X);
-      const agg = ['save', 'dPAT', 'dep', 'tax'].reduce((o, k) => (o[k] = X.reduce((a, s) => a + s[k], 0), o), {});
-      drawWho(agg, L(`Cộng dồn ${ys.length} năm (${ys[0]}–${ys[ys.length - 1]}) nếu mức giảm được áp dụng ở mỗi năm`, `Sum of ${ys.length} years (${ys[0]}–${ys[ys.length - 1]}) if the cut were applied each year`));
     }
-    if (S.tab === 'ana') drawAnalysis();
     if (S.tab === 'met') drawMethodAll(ys, R, X);
   }
 
@@ -1317,13 +1080,13 @@
   function render() {
     const r = S.year === 'all' ? null : row(S.bank, S.year);
     $('bank').value = S.bank; $('year').value = S.year; $('bp').value = S.bp; $('bpRange').value = Math.min(300, S.bp);
-    ['alpha', 'phi', 'tax', 'k', 'q'].forEach(id => { if (document.activeElement !== $(id)) $(id).value = Math.round(S[id] * 1000) / 10; });
+    ['alpha', 'phi'].forEach(id => { if (document.activeElement !== $(id)) $(id).value = Math.round(S[id] * 1000) / 10; });
     $('bp-pct').textContent = '= ' + f2.format(S.bp / 100) + L(' điểm %', ' pp');
     document.querySelectorAll('#chips .chip').forEach(c => c.setAttribute('aria-pressed', +c.dataset.bp === S.bp));
     document.querySelectorAll('#cmp-seg button').forEach(c => c.setAttribute('aria-pressed', c.dataset.m === S.cmp));
     document.querySelectorAll('#phi-presets button').forEach(c => c.setAttribute('aria-pressed', Math.abs(+c.dataset.phi - S.phi) < 1e-9));
     document.querySelectorAll('.tabs button').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === S.tab));
-    ['sim', 'ana', 'met'].forEach(t => $('tab-' + t).hidden = S.tab !== t);
+    ['sim', 'met'].forEach(t => $('tab-' + t).hidden = S.tab !== t);
     drawMacroRow();
     $('matrix-card').hidden = S.year === 'all' || !ECON.scenarios.length;
     if (S.year === 'all') { renderAll(); return; }
@@ -1332,10 +1095,9 @@
     drawHead(r, s);
     if (S.tab === 'sim') {
       $('sens-title').textContent = L('Giảm bao nhiêu thì còn giữ được mục tiêu lợi nhuận?', 'How far can rates be cut before missing the profit target?');
-      drawKpis(r, s); drawSens(r, s); drawWho(s); drawCmp(); drawScen(r);
+      drawKpis(r, s); drawSens(r, s); drawCmp(); drawScen(r);
       if (ECON.scenarios.length) drawMatrix(r);
     }
-    if (S.tab === 'ana') drawAnalysis();
     if (S.tab === 'met') drawMethod(r, s);
   }
   function syncYear() {
@@ -1379,7 +1141,7 @@
   $('tbl-matrix').addEventListener('click', pickCell);
   $('tbl-matrix').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pickCell(e); } });
   document.querySelector('.tabs').addEventListener('click', e => { if (e.target.dataset.tab) { S.tab = e.target.dataset.tab; render(); scrollTo({ top: 0 }); } });
-  [['alpha', 100], ['months', 12], ['phi', 100], ['tax', 50], ['k', 100], ['q', 100]].forEach(([id, hi]) =>
+  [['alpha', 100], ['months', 12], ['phi', 100]].forEach(([id, hi]) =>
     $(id).addEventListener('input', e => { const v = Math.max(0, Math.min(hi, +e.target.value || 0)); S[id] = id === 'months' ? v : v / 100; render(); }));
   let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(render, 120); });
   const footer = () => $('footer').textContent = L(`Nguồn: ${META.source}. Vĩ mô: FiinX (GSO, NHNN). Dữ liệu dựng ${META.built}. Mã nguồn: scripts/build_dataset.py, export_dashboard_data.py, analysis.py, econometrics.py, dashboard/index.html. VietLeap Hackathon 2026.`,

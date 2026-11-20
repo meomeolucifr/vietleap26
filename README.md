@@ -15,7 +15,7 @@ Data/macro/macro_vn.csv  Vĩ mô năm 2015–2025 lấy từ FiinX (GDP, CPI bì
 scripts/
   build_dataset.py       Đọc Data/*.xlsx, gộp thành bảng ngân hàng × năm; --xlsx xuất bảng Excel có công thức
   export_dashboard_data.py  -> dashboard/data.js      (số liệu nền, tỷ VND)
-  analysis.py            -> dashboard/analysis.js  (tương quan, truyền dẫn lãi suất, độ nhạy)
+  analysis.py            Dựng panel biến (dùng cho econometrics.py); -> dashboard/analysis.js (tương quan, truyền dẫn; dashboard hiện không hiển thị)
   econometrics.py        -> dashboard/econ.js      (hồi quy panel FE/RE, khai báo trong danh sách MODELS)
   run_pipeline.py        Chạy tất cả các bước trên rồi kiểm tra đồng nhất thức kế toán
   validate_dataset.py    Đối chiếu bảng gộp với file mẫu (chỉ chạy ở máy local)
@@ -36,7 +36,7 @@ Mở thẳng `dashboard/index.html` bằng trình duyệt cũng chạy được.
 
 ## Thêm hoặc sửa mô hình kinh tế lượng
 
-Sửa danh sách `MODELS` ở đầu [scripts/econometrics.py](scripts/econometrics.py): chọn biến phụ thuộc, biến giải thích, hiệu ứng cố định ngân hàng/năm, loại sai số chuẩn. Chạy lại `python scripts/econometrics.py`; dashboard tự hiển thị mô hình mới ở tab Phân tích dữ liệu. Biến có sẵn nằm trong hàm `panel()` của [scripts/analysis.py](scripts/analysis.py).
+Sửa danh sách `MODELS` ở đầu [scripts/econometrics.py](scripts/econometrics.py): chọn biến phụ thuộc, biến giải thích, hiệu ứng cố định ngân hàng/năm, loại sai số chuẩn. Chạy lại `python scripts/econometrics.py`; kết quả ghi vào dashboard/econ.js; bảng "Mô hình đề xuất" ở tab Phương pháp đọc các hệ số từ đó (mô hình mới cần thêm một dòng vào hàm `drawModelTable` trong dashboard/index.html). Biến có sẵn nằm trong hàm `panel()` của [scripts/analysis.py](scripts/analysis.py).
 
 Kịch bản vĩ mô (Thuận lợi / Cơ sở / Bất lợi) khai báo trong `SCENARIOS` của cùng file: mỗi kịch bản là chênh lệch vĩ mô giữa hai năm thật, đi qua mô hình `llp_macro` để ra thay đổi tỷ lệ chi phí dự phòng, rồi dashboard đưa vào mô phỏng.
 
