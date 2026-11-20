@@ -28,6 +28,8 @@ jobs:
       - run: pip install -r requirements.txt
       - name: Run pipeline (data -> analysis -> econometrics -> checks)
         run: python scripts/run_pipeline.py
+      - name: Check in-browser regression matches Python
+        run: node scripts/test_regress.js
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

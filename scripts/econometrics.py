@@ -33,6 +33,9 @@ from analysis import panel, VARS, VARS_EN, MACRO
 import build_dataset as b
 
 OUT = os.path.join(b.ROOT, 'dashboard', 'econ.js')
+PANEL_OUT = os.path.join(b.ROOT, 'dashboard', 'panel.js')
+# biến thêm cho người dùng tự chọn trên dashboard, ngoài các biến đã dùng trong MODELS
+PANEL_EXTRA = ['cost', 'yield', 'roe', 'ldr', 'nonii', 'd_nim', 'd_roa', 'credit_growth']
 
 LABELS = {**VARS, 'd_yield': 'Δ Lợi suất tài sản', 'd_cost': 'Δ Chi phí vốn', 'd_nim': 'Δ NIM', 'd_roa': 'Δ ROA',
           'ldr': 'LDR', 'const': 'Hằng số', 'llp': 'Chi phí DP / dư nợ BQ', 'loang': 'Tăng trưởng dư nợ',
@@ -217,3 +220,18 @@ if __name__ == '__main__':
         f.write('window.ECON = ' + json.dumps({'models': res, 'scenarios': scen, 'scenario_model': SCENARIO_MODEL, 'macro': macro},
                                               ensure_ascii=False, separators=(',', ':')) + ';\n')
     print('\nsaved', OUT)
+
+    # dữ liệu panel cho phần "Tự chạy hồi quy" trên dashboard (dashboard/regress.js ước lượng lại trên trình duyệt)
+    cols = sorted({c for m in MODELS for c in [m['y']] + m['x']} | set(PANEL_EXTRA))
+    num = lambda v: None if pd.isna(v) or np.isinf(v) else float(f'{v:.10g}')
+    rows = [[bank, int(year), int(pat > 0)] + [num(v) for v in vals]
+            for bank, year, pat, vals in zip(df['bank'], df['year'], df['pat'], df[cols].to_numpy(dtype=float))]
+    panel_out = {'cols': ['bank', 'year', 'pat_pos'] + cols, 'rows': rows,
+                 'labels': {c: LABELS.get(c, c) for c in cols}, 'labels_en': {c: LABELS_EN.get(c, c) for c in cols},
+                 'macro': [c for c in cols if c in MACRO_COLS],
+                 'presets': [{k: m.get(k) for k in ('id', 'title', 'title_en', 'y', 'x', 'entity', 'time', 'cov', 'alt_cov', 'trim')}
+                             | {'pat_pos': 'sample' in m} for m in MODELS]}
+    with open(PANEL_OUT, 'w', encoding='utf-8') as f:
+        f.write('// Sinh tự động bởi scripts/econometrics.py - không sửa tay\n')
+        f.write('window.PANEL = ' + json.dumps(panel_out, ensure_ascii=False, separators=(',', ':')) + ';\n')
+    print('saved', PANEL_OUT, len(rows), 'rows')

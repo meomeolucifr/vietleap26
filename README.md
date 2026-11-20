@@ -18,6 +18,7 @@ scripts/
   analysis.py            Dựng panel biến (dùng cho econometrics.py); -> dashboard/analysis.js (tương quan, truyền dẫn; dashboard hiện không hiển thị)
   econometrics.py        -> dashboard/econ.js      (hồi quy panel FE/RE, khai báo trong danh sách MODELS)
   run_pipeline.py        Chạy tất cả các bước trên rồi kiểm tra đồng nhất thức kế toán
+  test_regress.js        Kiểm tra dashboard/regress.js (hồi quy trên trình duyệt) khớp kết quả Python: node scripts/test_regress.js
   validate_dataset.py    Đối chiếu bảng gộp với file mẫu (chỉ chạy ở máy local)
 dashboard/               Trang web tĩnh (index.html + 3 file .js sinh tự động). Đây là thứ được deploy
 Output/                  Bảng panel Excel có công thức
@@ -44,4 +45,4 @@ Lưu ý: biến vĩ mô (GDP, CPI…) giống nhau cho mọi ngân hàng trong c
 
 ## Deploy
 
-Mỗi lần push lên nhánh `main`, GitHub Actions cài thư viện, chạy `run_pipeline.py` (dừng nếu kiểm tra dữ liệu không đạt) rồi đưa thư mục `dashboard/` lên GitHub Pages. Cần bật một lần: Settings → Pages → Source: GitHub Actions. GitHub Pages chỉ miễn phí cho repo public.
+Mỗi lần push lên nhánh `main`, GitHub Actions cài thư viện, chạy `run_pipeline.py` (dừng nếu kiểm tra dữ liệu không đạt), kiểm tra hồi quy trên trình duyệt khớp Python, rồi đưa thư mục `dashboard/` lên https://meomeolucifr.github.io/vietleap26/. Thêm hoặc sửa dữ liệu rồi push là hồi quy và dashboard tự cập nhật.

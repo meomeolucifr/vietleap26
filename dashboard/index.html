@@ -191,6 +191,20 @@
   .mini-in .sep { width: 1px; height: 22px; background: var(--line-2); }
   @media (prefers-reduced-motion: no-preference) { .mini-bar { animation: mini-in .18s ease-out; } }
   @keyframes mini-in { from { transform: translateY(-100%); } to { transform: none; } }
+  /* tự chạy hồi quy */
+  .lab-grid { display: grid; grid-template-columns: minmax(280px, 380px) 1fr; gap: 24px; align-items: start; }
+  @media (max-width: 980px) { .lab-grid { grid-template-columns: 1fr; } }
+  .lab-ctl { display: grid; gap: 14px; }
+  .lab-ctl .k-label { display: block; font-size: 12px; color: var(--ink-2); font-weight: 600; margin-bottom: 6px; }
+  .lab-ctl select { width: 100%; border: 1px solid var(--line-2); border-radius: 8px; background: var(--card-2); padding: 6px 8px; }
+  .pick { display: flex; flex-wrap: wrap; gap: 6px; }
+  .pick button { border: 1px solid var(--line-2); background: var(--card); border-radius: 999px; padding: 3px 10px; font-size: 12px; color: var(--ink-2); cursor: pointer; }
+  .pick button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .pick button:disabled { opacity: .4; cursor: not-allowed; }
+  .lab-presets { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+  .lab-out td.ci { width: 130px; padding: 4px 6px; }
+  .lab-out td:first-child, .lab-out th:first-child { text-align: left; }
+  .lab-warn { color: var(--warn); font-size: 12.5px; margin-top: 8px; }
   .cmp-take { margin: 0 0 12px; font-size: 13.5px; font-weight: 500; color: var(--ink); max-width: 760px; }
   .pagehead .brief { font-size: 13px; color: var(--accent); font-weight: 600; margin: 0 0 6px; max-width: 900px; }
   .term { border-bottom: 1px dotted currentColor; cursor: help; }
@@ -330,6 +344,14 @@
       <div class="card-head"><div><h2 data-t="mdTitle"></h2><p class="desc" data-t="mdDesc"></p></div></div>
       <div class="scroll"><table class="model-tbl" id="tbl-model"></table></div>
     </section>
+    <section class="card" style="margin-top:16px" id="lab-card">
+      <div class="card-head"><div><h2 data-t="labTitle"></h2><p class="desc" data-t="labDesc"></p></div></div>
+      <div class="lab-presets pick" id="lab-presets"></div>
+      <div class="lab-grid">
+        <div class="lab-ctl" id="lab-ctl"></div>
+        <div class="lab-out" id="lab-out"></div>
+      </div>
+    </section>
     <section class="card" style="margin-top:16px">
       <div class="card-head"><div><h2 data-t="varTitle"></h2><p class="desc" id="var-desc"></p></div></div>
       <div class="scroll"><table class="model-tbl" id="tbl-vars"></table></div>
@@ -378,6 +400,8 @@
 
 <script src="data.js"></script>
 <script src="econ.js"></script>
+<script src="panel.js"></script>
+<script src="regress.js"></script>
 <script>
 (() => {
   'use strict';
@@ -428,6 +452,9 @@
     mdDesc: ['Mô phỏng tính tác động bằng công thức trên báo cáo tài chính của ngân hàng. Những gì một năm báo cáo không cho biết, như phần chi phí vốn được bù lại hay dự phòng tăng khi kinh tế xấu đi, được ước lượng bằng hồi quy trên {n} ngân hàng × 10 năm.',
              'The simulator computes the impact with formulas on the bank\'s own statements. What a single year cannot tell, such as how much funding cost offsets the cut or how provisions rise in a downturn, is estimated by regressions on {n} banks × 10 years.'],
     varTitle: ['Biến, công thức và nguồn dữ liệu', 'Variables, formulas and data sources'],
+    labTitle: ['Tự chạy hồi quy', 'Run your own regression'],
+    labDesc: ['Chọn một mô hình có sẵn hoặc tự chọn biến; kết quả tính lại ngay trên trình duyệt với dữ liệu {n} ngân hàng × 10 năm. Cách tính giống hệt mã Python của nhóm (linearmodels), đã đối chiếu khớp đến 8 chữ số với cả 6 mô hình đề xuất.',
+              'Pick a ready-made model or choose your own variables; results are re-estimated in the browser on {n} banks × 10 years. The method is identical to the team\'s Python code (linearmodels) and matches all 6 proposed models to 8 digits.'],
     miniBp: ['Mức giảm', 'Rate cut'], miniPhi: ['Chi phí vốn bù', 'Funding offset'],
     bank: ['Ngân hàng', 'Bank'], year: ['Năm nền', 'Base year'],
     bpHint: ['Mức giảm lãi suất cho vay, tính bằng điểm cơ bản: 10 bp = 0,1 điểm %', 'Lending-rate cut in basis points: 10 bp = 0.1 percentage point'],
@@ -477,7 +504,7 @@
       .map(([m, vi, en]) => `<button data-m="${m}" aria-pressed="${m === S.cmp}">${L(vi, en)}</button>`).join('');
     $('phi-presets').innerHTML = `<button data-phi="${PHI_DATA}" data-tip="${esc(L('Ước lượng khi riêng một ngân hàng giảm lãi (mô hình có hiệu ứng năm)', 'Estimate when one bank cuts alone (model with year effects)'))}">${L('Dữ liệu', 'Data')} ${pct(PHI_DATA, 0)}</button>` +
       `<button data-phi="0" data-tip="${esc(L('Không bù được gì: kịch bản xấu nhất cho ngân hàng', 'No offset: worst case for the bank'))}">${L('Xấu nhất', 'Worst')} 0%</button>`;
-    drawLimits(); drawGlossary(); drawModelTable(); drawVars(); paintTheme();
+    drawLimits(); drawGlossary(); drawModelTable(); drawVars(); drawLab(); paintTheme();
   }
 
   // ---------- mô hình đề xuất: mắt xích từ mức giảm lãi đến chỉ số an toàn ----------
@@ -507,6 +534,58 @@
     // công thức và tham số của từng mắt xích đã có ở bảng "Công thức" bên dưới; ở đây chỉ giữ mắt xích, kết quả, ý nghĩa
     $('tbl-model').innerHTML = `<thead><tr><th>${L('Mắt xích', 'Link')}</th><th>${L('Mô hình và kết quả', 'Model and result')}</th><th>${L('Ý nghĩa cho chỉ số an toàn', 'What it means for the safety indicators')}</th></tr></thead><tbody>` +
       rows.map(r => `<tr><td>${r[0]}</td><td>${r[3]}</td><td>${r[4]}</td></tr>`).join('') + '</tbody>';
+  }
+
+  // ---------- tự chạy hồi quy (dashboard/regress.js) ----------
+  const PANEL = window.PANEL, LAB = { spec: null };
+  function labLabel(c) { return (S.lang === 'en' ? PANEL.labels_en : PANEL.labels)[c] || c; }
+  function labPreset(id) { const p = PANEL.presets.find(x => x.id === id); LAB.spec = { ...p, x: [...p.x] }; LAB.preset = id; }
+  function drawLab() {
+    if (!PANEL || !window.Regress) { $('lab-card').hidden = true; return; }
+    if (!LAB.spec) labPreset('pass_bank');
+    const sp = LAB.spec, macro = new Set(PANEL.macro);
+    // biến ngân hàng trước, biến vĩ mô sau; mỗi nhóm xếp theo tên hiển thị
+    const vars = PANEL.cols.slice(3).sort((a, c) => (macro.has(a) - macro.has(c)) || labLabel(a).localeCompare(labLabel(c), S.lang));
+    $('lab-presets').innerHTML = PANEL.presets.map(p => `<button data-preset="${p.id}" aria-pressed="${LAB.preset === p.id}" data-tip="${esc(LX(p, 'title'))}"><code>${p.id}</code></button>`).join('');
+    const tog = (key, on, label, tip) => `<button data-tog="${key}" aria-pressed="${on}" ${tip ? `data-tip="${esc(tip)}"` : ''}>${label}</button>`;
+    $('lab-ctl').innerHTML = `
+      <div><span class="k-label">${L('Biến phụ thuộc', 'Dependent variable')}</span>
+        <select id="lab-y">${vars.map(c => `<option value="${c}" ${c === sp.y ? 'selected' : ''}>${esc(labLabel(c))}</option>`).join('')}</select></div>
+      <div><span class="k-label">${L('Biến giải thích', 'Regressors')}</span><div class="pick" id="lab-x">${vars.filter(c => c !== sp.y).map(c => {
+        const off = sp.time && macro.has(c);
+        return `<button data-x="${c}" aria-pressed="${sp.x.includes(c)}" ${off ? 'disabled' : ''} data-tip="${esc(off ? L('Biến vĩ mô giống nhau cho mọi ngân hàng trong năm nên bị hiệu ứng cố định năm hấp thụ. Tắt FE năm để dùng.', 'Macro variables are identical across banks in a year, so year fixed effects absorb them. Turn off year FE to use them.') : labLabel(c))}">${esc(labLabel(c))}${macro.has(c) ? ' ·' + L('vĩ mô', 'macro') : ''}</button>`; }).join('')}</div></div>
+      <div><span class="k-label">${L('Hiệu ứng cố định', 'Fixed effects')}</span><div class="pick">
+        ${tog('entity', sp.entity, L('Ngân hàng', 'Bank'), L('Loại bỏ khác biệt cố định giữa các ngân hàng', 'Removes fixed differences between banks'))}
+        ${tog('time', sp.time, L('Năm', 'Year'), L('Loại bỏ biến động chung của cả hệ thống trong từng năm', 'Removes system-wide moves in each year'))}</div></div>
+      <div><span class="k-label">${L('Sai số chuẩn', 'Standard errors')}</span>
+        <select id="lab-cov">${[['clustered', L('Cụm theo ngân hàng', 'Clustered by bank')], ['kernel', 'Driscoll-Kraay'], ['robust', 'Robust (White)']].map(([v, t]) => `<option value="${v}" ${v === sp.cov ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
+      <div><span class="k-label">${L('Mẫu', 'Sample')}</span><div class="pick">
+        ${[0, 1, 5].map(t => `<button data-trim="${t}" aria-pressed="${(sp.trim || 0) === t}">${t ? L(`Bỏ ${t}% đuôi`, `Trim ${t}%`) : L('Không bỏ đuôi', 'No trimming')}</button>`).join('')}
+        ${tog('pat_pos', !!sp.pat_pos, L('Chỉ năm có lãi', 'Profitable years only'))}</div></div>`;
+    drawLabResult();
+  }
+  function drawLabResult() {
+    const sp = LAB.spec, el = $('lab-out');
+    const x = sp.x.filter(c => !(sp.time && PANEL.macro.includes(c)));
+    if (!x.length) { el.innerHTML = `<p class="desc">${L('Chọn ít nhất một biến giải thích.', 'Pick at least one regressor.')}</p>`; return; }
+    let r;
+    try { r = Regress.fit(PANEL, { ...sp, x }); }
+    catch (e) { el.innerHTML = `<p class="lab-warn">${L('Không ước lượng được: các biến đang chọn trùng thông tin nhau hoặc quá ít quan sát. Bớt biến hoặc tắt một hiệu ứng cố định.', 'Cannot estimate: the chosen variables are collinear or there are too few observations. Drop a variable or a fixed effect.')}</p>`; return; }
+    const sig = new Intl.NumberFormat(S.lang === 'en' ? 'en-US' : 'vi-VN', { maximumSignificantDigits: 3 });
+    const fc = v => (v < 0 ? '−' : '') + sig.format(Math.abs(v)), stars = p => p < 0.01 ? '***' : p < 0.05 ? '**' : p < 0.1 ? '*' : '';
+    const fp = p => p < 0.001 ? '<' + nf(3).format(0.001) : nf(3).format(p);
+    const bar = c => { const w = 120, h = 18, R = Math.max(Math.abs(c.lo), Math.abs(c.hi)) * 1.15 || 1, X = v => w / 2 + v / R * (w / 2 - 6), col = c.p < 0.05 ? 'var(--accent)' : 'var(--muted)';
+      return `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" aria-hidden="true"><line x1="${w / 2}" x2="${w / 2}" y1="1" y2="${h - 1}" stroke="var(--line-2)"/><line x1="${X(c.lo)}" x2="${X(c.hi)}" y1="${h / 2}" y2="${h / 2}" stroke="${col}" stroke-width="2" stroke-linecap="round"/><circle cx="${X(c.b)}" cy="${h / 2}" r="4" fill="${col}"/></svg>`; };
+    const spec = `${sp.y} ~ ${x.join(' + ')}${sp.entity ? ' + bank FE' : ''}${sp.time ? ' + year FE' : ''}`;
+    const preset = PANEL.presets.find(p => p.id === LAB.preset);
+    el.innerHTML = `<code class="spec" style="font-size:12px">${esc(spec)}</code>
+      <div class="desc" style="margin:8px 0">n = ${r.n}, ${r.banks} ${L('ngân hàng', 'banks')}, ${r.years.join('–')} · R² within = ${f2.format(r.r2_within)}</div>
+      <div class="scroll"><table><thead><tr><th>${L('Biến', 'Variable')}</th><th>${L('Hệ số', 'Coef.')}</th><th>SE</th><th>t</th><th>p</th><th>${L('CI 95% (0 ở giữa)', '95% CI (0 centred)')}</th></tr></thead><tbody>
+        ${r.coefs.map(c => `<tr data-tip="${esc(`<b>${labLabel(c.var)}</b><br>CI 95% [${fc(c.lo)}; ${fc(c.hi)}]`)}"><td>${esc(labLabel(c.var))}</td><td>${fc(c.b)}${stars(c.p)}</td><td>${fc(c.se)}</td><td>${f2.format(c.t)}</td><td>${fp(c.p)}</td><td class="ci">${bar(c)}</td></tr>`).join('')}
+      </tbody></table></div>
+      <p class="desc" style="margin-top:8px">${L('*** p < 0,01 · ** p < 0,05 · * p < 0,1. Chấm xanh: có ý nghĩa ở mức 5%. Đây là tương quan có điều kiện, không phải quan hệ nhân quả.', '*** p < 0.01 · ** p < 0.05 · * p < 0.1. Blue dot: significant at 5%. These are conditional correlations, not causal effects.')}</p>` +
+      (preset ? `<p class="desc">${L('Đang xem mô hình đề xuất', 'Showing the proposed model')} <code>${preset.id}</code>: ${esc(LX(preset, 'title'))}</p>` : '') +
+      (sp.x.length !== x.length ? `<p class="lab-warn">${L('Đã bỏ biến vĩ mô vì đang bật hiệu ứng cố định năm.', 'Macro variables dropped because year fixed effects are on.')}</p>` : '');
   }
 
   // ---------- biến: công thức, dòng báo cáo tài chính, nơi lấy ----------
@@ -1258,6 +1337,24 @@
     new IntersectionObserver(([e]) => { ctrlVisible = e.isIntersecting; syncMini(); }, { threshold: 0 }).observe($('controls'));
   $('cmp-seg').addEventListener('click', e => { if (e.target.dataset.m) { S.cmp = e.target.dataset.m; render(); } });
   $('phi-presets').addEventListener('click', e => { if (e.target.dataset.phi != null) { S.phi = +e.target.dataset.phi; render(); } });
+  // tự chạy hồi quy: mọi thay đổi bỏ trạng thái "đang xem mô hình đề xuất" rồi ước lượng lại
+  $('lab-card').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b || b.disabled) return;
+    const sp = LAB.spec; if (!sp) return;
+    if (b.dataset.preset) labPreset(b.dataset.preset);
+    else { LAB.preset = null;
+      if (b.dataset.x) sp.x = sp.x.includes(b.dataset.x) ? sp.x.filter(c => c !== b.dataset.x) : [...sp.x, b.dataset.x];
+      else if (b.dataset.tog) sp[b.dataset.tog] = !sp[b.dataset.tog];
+      else if (b.dataset.trim != null) sp.trim = +b.dataset.trim;
+      else return; }
+    drawLab();
+  });
+  $('lab-card').addEventListener('change', e => {
+    const sp = LAB.spec; if (!sp) return; LAB.preset = null;
+    if (e.target.id === 'lab-y') { sp.y = e.target.value; sp.x = sp.x.filter(c => c !== sp.y); }
+    if (e.target.id === 'lab-cov') sp.cov = e.target.value;
+    drawLab();
+  });
   ['macro-seg', 'macro-seg2'].forEach(id => $(id).addEventListener('click', e => { if (e.target.dataset.macro) { S.macro = e.target.dataset.macro; render(); } }));
   const pickCell = e => { const td = e.target.closest('td[data-macro]'); if (td) { S.macro = td.dataset.macro; S.bp = +td.dataset.bp; render(); } };
   $('tbl-matrix').addEventListener('click', pickCell);
