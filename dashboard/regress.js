@@ -76,7 +76,16 @@
    * spec: { y, x: [...], entity, time, cov: 'clustered'|'kernel'|'robust', trim (%), pat_pos }
    * panel: window.PANEL từ econometrics.py
    */
-  function fit(panel, spec, covType = spec.cov) {
+  // phần dư của v sau khi hồi quy theo các cột Z (đã khử hiệu ứng cố định); Z rỗng thì giữ nguyên
+  function residualize(v, Z) {
+    if (!Z.length) return v.slice();
+    const ZtZ = Z.map(a => Z.map(b => a.reduce((s, x, i) => s + x * b[i], 0)));
+    const Ztv = Z.map(a => a.reduce((s, x, i) => s + x * v[i], 0));
+    const g = inv(ZtZ).map(r => r.reduce((s, x, j) => s + x * Ztv[j], 0));
+    return v.map((x, i) => x - Z.reduce((s, col, j) => s + col[i] * g[j], 0));
+  }
+
+  function fit(panel, spec, covType = spec.cov, opts = {}) {
     const ci = Object.fromEntries(panel.cols.map((c, i) => [c, i]));
     const cols = [spec.y, ...spec.x];
     if (!spec.x.length) throw new Error('no regressors');
@@ -123,8 +132,17 @@
     let ssr = 0, sst = 0;
     yw.forEach((v, i) => { const r = v - Xw.reduce((s, col, j) => s + col[i] * beta[j], 0); ssr += r * r; sst += v * v; });
 
+    // biểu đồ added-variable (Frisch–Waugh): phần dư của y và của biến được vẽ sau khi loại các biến còn lại
+    // và hiệu ứng cố định; độ dốc của đám điểm này đúng bằng hệ số của biến đó
+    let avp = null;
+    if (opts.avp && spec.x.includes(opts.avp)) {
+      const j = spec.x.indexOf(opts.avp), others = X.filter((_, q) => q !== j);
+      const rx = residualize(X[j], others), ry = residualize(y, others);
+      avp = rx.map((v, i) => ({ bank: ent[i], year: tim[i], x: v, y: ry[i] }));
+    }
+
     return {
-      n, banks: nE, years: [Math.min(...tim), Math.max(...tim)], r2_within: 1 - ssr / sst, df: dfRes,
+      avp, n, banks: nE, years: [Math.min(...tim), Math.max(...tim)], r2_within: 1 - ssr / sst, df: dfRes,
       coefs: spec.x.map((c, j) => { const se = Math.sqrt(V[j][j]), t = beta[j] / se;
         return { var: c, b: beta[j], se, t, p: tTwoSided(t, dfRes), lo: beta[j] - tc * se, hi: beta[j] + tc * se }; }),
     };

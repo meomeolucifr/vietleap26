@@ -36,17 +36,22 @@ OUT = os.path.join(b.ROOT, 'dashboard', 'econ.js')
 PANEL_OUT = os.path.join(b.ROOT, 'dashboard', 'panel.js')
 # biến thêm cho người dùng tự chọn trên dashboard, ngoài các biến đã dùng trong MODELS
 PANEL_EXTRA = ['cost', 'yield', 'roe', 'ldr', 'nonii', 'd_nim', 'd_roa', 'credit_growth']
+RWA_TA = 0.82  # tỷ lệ RWA / tổng tài sản trung vị; cập nhật từ dữ liệu trong __main__
+# 4 mô hình chính, mỗi mô hình kiểm chứng một chỉ số an toàn trên dashboard; dashboard vẽ biểu đồ cho từng cái
+MAIN = ['pass_bank', 'roa_det', 'car_resp', 'llp_macro']
 
 LABELS = {**VARS, 'd_yield': 'Δ Lợi suất tài sản', 'd_cost': 'Δ Chi phí vốn', 'd_nim': 'Δ NIM', 'd_roa': 'Δ ROA',
           'ldr': 'LDR', 'const': 'Hằng số', 'llp': 'Chi phí DP / dư nợ BQ', 'loang': 'Tăng trưởng dư nợ',
           'npl_lag': 'Nợ xấu năm trước', 'dep_share': 'Tiền gửi / nợ phải trả',
           'gdp_growth': 'Tăng trưởng GDP', 'cpi_avg': 'Lạm phát CPI BQ', 'deposit_rate_12m': 'LS huy động >12 tháng',
-          'credit_growth': 'Tăng trưởng tín dụng toàn hệ thống'}
+          'credit_growth': 'Tăng trưởng tín dụng toàn hệ thống', 'd_car': 'Δ CAR', 'car': 'CAR',
+          'd_npl_lead': 'Δ Nợ xấu năm sau', 'rwa_ta': 'RWA / tổng tài sản'}
 LABELS_EN = {**VARS_EN, 'd_yield': 'Δ Asset yield', 'd_cost': 'Δ Funding cost', 'd_nim': 'Δ NIM', 'd_roa': 'Δ ROA',
              'ldr': 'Loan/deposit', 'const': 'Constant', 'llp': 'Provisions / avg loans', 'loang': 'Loan growth',
              'npl_lag': 'NPL ratio, prior year', 'dep_share': 'Deposits / liabilities',
              'gdp_growth': 'Real GDP growth', 'cpi_avg': 'CPI inflation (avg)', 'deposit_rate_12m': 'Deposit rate >12m',
-             'credit_growth': 'System credit growth'}
+             'credit_growth': 'System credit growth', 'd_car': 'Δ CAR', 'car': 'CAR',
+             'd_npl_lead': 'Δ NPL ratio next year', 'rwa_ta': 'RWA / total assets'}
 
 
 def vn(x, d=2):
@@ -91,6 +96,25 @@ MODELS = [
                                 'Loan growth does respond to yield; the simulator should add the RWA increase when computing CAR.')),
          note='Hiệu ứng năm hấp thụ room tín dụng chung và chu kỳ; hệ số đo phản ứng riêng của từng ngân hàng. Không loại trừ cầu tín dụng phản ứng khi cả thị trường giảm lãi.',
          note_en='Year effects absorb system-wide credit quotas and the cycle; the coefficient measures each bank\'s own response. Does not rule out a credit-demand response to a market-wide cut.'),
+    dict(id='car_resp', title='Lợi nhuận và tăng trưởng tín dụng làm CAR thay đổi bao nhiêu?',
+         title_en='How much do profit and loan growth move CAR?',
+         y='d_car', x=['roa', 'loang'], entity=True, time=True, cov='clustered', trim=1,
+         so_what=lambda B, P: (f'ROA tăng 1 điểm đi kèm CAR tăng {vn(B["roa"])} điểm. Công thức của mô phỏng (lợi nhuận giữ lại / RWA) ngầm định khoảng {vn(1 / RWA_TA, 2)}, nên cách dashboard tính CAR khớp với dữ liệu.',
+                               f'A 1-point rise in ROA goes with a {B["roa"]:.2f}-point rise in CAR. The simulator\'s formula (retained profit / RWA) implies about {1 / RWA_TA:.2f}, so the dashboard\'s CAR calculation is consistent with the data.'),
+         note='Chỉ dùng năm có đủ vốn tự có và RWA để CAR cùng một cách đo; CAR công bố đổi phương pháp theo Thông tư 41 từ 2020 nên không trộn vào. Mẫu nhỏ, khoảng tin cậy rộng.',
+         note_en='Uses only years with both regulatory capital and RWA so CAR is measured one way; reported CAR changed method under Circular 41 from 2020 and is not mixed in. Small sample, wide confidence interval.'),
+    dict(id='npl_resp', title='Giảm lãi có giúp nợ xấu năm sau giảm không?',
+         title_en='Does a lower rate reduce next year\'s NPLs?',
+         y='d_npl_lead', x=['d_yield'], entity=True, time=True, cov='clustered', trim=1,
+         so_what=lambda B, P: (('Không thấy bằng chứng: lợi suất giảm không đi kèm nợ xấu năm sau giảm '
+                                f'(p = {vn(P["d_yield"])}). Mô phỏng vì vậy không cộng thêm lợi ích này.',
+                                'No evidence: a lower yield does not come with lower NPLs the following year '
+                                f'(p = {P["d_yield"]:.2f}). The simulator therefore adds no such benefit.')
+                               if P['d_yield'] >= 0.1 else
+                               ('Có bằng chứng nợ xấu năm sau phản ứng với mức lợi suất; nên cân nhắc đưa vào mô phỏng.',
+                                'Next-year NPLs do respond to yield; consider adding this to the simulator.')),
+         note='Nợ xấu năm sau trừ nợ xấu năm nay, theo thay đổi lợi suất năm nay; có hiệu ứng năm.',
+         note_en='Next year\'s NPL ratio minus this year\'s, on this year\'s change in yield; with year effects.'),
     dict(id='nim_macro', title='Điều kiện vĩ mô có giải thích được NIM của ngân hàng không?',
          title_en='Do macro conditions explain bank NIM?',
          y='nim', x=['deposit_rate_12m', 'gdp_growth', 'cpi_avg', 'loang', 'npl', 'size'],
@@ -198,6 +222,7 @@ def hausman(d, m):
 
 if __name__ == '__main__':
     df = panel()
+    RWA_TA = float(df['rwa_ta'].median())
     res = []
     for m in MODELS:
         out, r = fit(df, m)
@@ -217,7 +242,7 @@ if __name__ == '__main__':
              'source_en': 'FiinX: real GDP (GSO), CPI year-on-year averaged over 12 months (GSO), >12-month deposit rate (midpoint, SBV, December), credit growth (SBV, December)'}
     with open(OUT, 'w', encoding='utf-8') as f:
         f.write('// Sinh tự động bởi scripts/econometrics.py - không sửa tay\n')
-        f.write('window.ECON = ' + json.dumps({'models': res, 'scenarios': scen, 'scenario_model': SCENARIO_MODEL, 'macro': macro},
+        f.write('window.ECON = ' + json.dumps({'models': res, 'scenarios': scen, 'scenario_model': SCENARIO_MODEL, 'macro': macro, 'main': MAIN, 'rwa_ta': RWA_TA},
                                               ensure_ascii=False, separators=(',', ':')) + ';\n')
     print('\nsaved', OUT)
 

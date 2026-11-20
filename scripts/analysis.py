@@ -62,6 +62,11 @@ def panel():
     df['loang'] = np.where(consecutive, df['loans'] / lag['loans'] - 1, np.nan)  # tăng trưởng dư nợ của ngân hàng
     df['npl_lag'] = np.where(consecutive, lag['npl'], np.nan)
     df['dep_share'] = df['deposits'] / df['liab']
+    # thay đổi CAR (chỉ dùng vốn tự có / RWA để cùng một cách đo) và nợ xấu năm sau so với năm nay
+    df['d_car'] = np.where(consecutive, df['car'] - df.groupby('bank')['car'].shift(1), np.nan)
+    lead = df.groupby('bank').shift(-1)
+    df['d_npl_lead'] = np.where((lead['year'] - df['year']) == 1, lead['npl'] - df['npl'], np.nan)
+    df['rwa_ta'] = df['rwa'] / df['ta']
     # vĩ mô (giống nhau cho mọi ngân hàng trong năm), đổi % -> tỷ lệ cho cùng đơn vị với biến ngân hàng
     mac = pd.read_csv(MACRO)
     for c in MACRO_VARS:
