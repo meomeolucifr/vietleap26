@@ -10,7 +10,8 @@
 <script>
   // chọn theme trước khi vẽ để không nháy: lựa chọn đã lưu > cài đặt hệ điều hành
   (function () {
-    var t = localStorage.getItem('rcl-theme');
+    var t = null;
+    try { t = localStorage.getItem('rcl-theme'); } catch (e) {}  // bộ nhớ trình duyệt có thể bị chặn khi nhúng trang
     if (!t) t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     document.documentElement.dataset.theme = t;
   })();
@@ -361,9 +362,12 @@
   const CAR_MIN = 0.08;  // tỷ lệ an toàn vốn tối thiểu theo Thông tư 41/2016/TT-NHNN
 
   // ---------- ngôn ngữ ----------
-  // ?lang=en trên URL thắng lựa chọn đã lưu, để gửi link tiếng Anh cho giám khảo
+  // bộ nhớ trình duyệt có thể bị chặn (trang nhúng, chế độ riêng tư): lỗi thì bỏ qua, trang vẫn chạy
+  const store = { get: k => { try { return localStorage.getItem(k); } catch (e) { return null; } },
+                  set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} } };
+  // ?lang=en hoặc #en trên link thắng lựa chọn đã lưu, để gửi link tiếng Anh cho giám khảo
   const S = { tab: 'sim', bank: 'VCB', year: 2025, bp: 25, alpha: 1, months: 12, phi: 0, tax: 0.2, k: 1, q: 0.9, cmp: 'pat', macro: 'base',
-    lang: new URLSearchParams(location.search).get('lang') || localStorage.getItem('rcl-lang') || 'vi' };
+    lang: new URLSearchParams(location.search).get('lang') || { '#en': 'en', '#vi': 'vi' }[location.hash] || store.get('rcl-lang') || 'vi' };
   const L = (vi, en) => S.lang === 'en' ? en : vi;
   const LX = (o, k) => S.lang === 'en' && o[k + '_en'] != null ? o[k + '_en'] : o[k];   // trường song ngữ từ Python
 
@@ -1143,11 +1147,12 @@
   }
   themeBtn.addEventListener('click', () => {
     const t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
-    document.documentElement.dataset.theme = t; localStorage.setItem('rcl-theme', t); paintTheme(); render();
+    document.documentElement.dataset.theme = t; store.set('rcl-theme', t); paintTheme(); render();
   });
   $('lang').addEventListener('click', () => {
-    S.lang = S.lang === 'en' ? 'vi' : 'en'; localStorage.setItem('rcl-lang', S.lang);
-    const u = new URL(location.href); u.searchParams.set('lang', S.lang); history.replaceState(null, '', u);
+    S.lang = S.lang === 'en' ? 'vi' : 'en'; store.set('rcl-lang', S.lang);
+    // link chia sẻ mang theo ngôn ngữ: ?lang= khi mở trực tiếp; #en/#vi khi xem trong trang Claude (chỉ hash đi qua được)
+    try { const u = new URL(location.href); u.searchParams.delete('lang'); u.hash = S.lang; history.replaceState(null, '', u); } catch (e) {}
     setFmt(); applyStatic(); syncYear(); render(); footer();
   });
 
