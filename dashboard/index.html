@@ -179,6 +179,18 @@
   table.model-tbl td:first-child { font-weight: 600; min-width: 150px; }
   table.model-tbl code { font-size: 11.5px; background: var(--card-2); border-radius: 5px; padding: 1px 5px; }
   table.model-tbl .grp td { background: var(--card-2); font-weight: 600; color: var(--ink-2); font-size: 12px; }
+  /* thanh điều chỉnh gọn: hiện ở đầu trang khi khung điều chỉnh chính đã cuộn khuất */
+  .mini-bar { position: fixed; top: 0; left: 0; right: 0; z-index: 25; border-bottom: 1px solid var(--line);
+              background: color-mix(in srgb, var(--card) 94%, transparent); backdrop-filter: blur(8px); box-shadow: var(--shadow); }
+  .mini-in { max-width: 2200px; margin: 0 auto; padding: 8px clamp(14px, 2vw, 36px); display: flex; align-items: center; gap: 10px 14px; flex-wrap: wrap; }
+  .mini-in .lbl { font-size: 12.5px; color: var(--ink-2); font-weight: 500; }
+  .mini-in input[type=number] { width: 64px; border: 1px solid var(--line-2); border-radius: 8px; background: var(--card-2); padding: 3px 8px;
+                                font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .mini-in input[type=range] { flex: 1 1 160px; min-width: 120px; max-width: 420px; height: 22px; }
+  .mini-in .u { color: var(--muted); font-size: 12px; margin-left: -8px; }
+  .mini-in .sep { width: 1px; height: 22px; background: var(--line-2); }
+  @media (prefers-reduced-motion: no-preference) { .mini-bar { animation: mini-in .18s ease-out; } }
+  @keyframes mini-in { from { transform: translateY(-100%); } to { transform: none; } }
   .cmp-take { margin: 0 0 12px; font-size: 13.5px; font-weight: 500; color: var(--ink); max-width: 760px; }
   .pagehead .brief { font-size: 13px; color: var(--accent); font-weight: 600; margin: 0 0 6px; max-width: 900px; }
   .term { border-bottom: 1px dotted currentColor; cursor: help; }
@@ -253,7 +265,7 @@
 
   <!-- ===================== MÔ PHỎNG ===================== -->
   <main id="tab-sim">
-    <section class="card">
+    <section class="card" id="controls">
       <div class="control">
         <div>
           <div class="bp-big"><input id="bp" type="number" min="0" max="500" step="1" value="25">
@@ -348,6 +360,18 @@
     </section>
   </main>
 
+  <div class="mini-bar" id="mini" hidden>
+    <div class="mini-in">
+      <span class="lbl" data-t="miniBp"></span><input id="bp2" type="number" min="0" max="500" step="1"><span class="u">bp</span>
+      <input id="bpRange2" type="range" min="0" max="300" step="1">
+      <div class="chips" id="chips2"></div>
+      <span class="sep"></span>
+      <span class="lbl" data-t="miniPhi"></span><input id="phi2" type="number" min="0" max="100"><span class="u">%</span>
+      <span class="sep"></span>
+      <div class="seg" role="group" id="macro-seg2"></div>
+    </div>
+  </div>
+
   <footer id="footer"></footer>
 </div>
 <div id="tip" role="tooltip"></div>
@@ -404,6 +428,7 @@
     mdDesc: ['Mô phỏng tính tác động bằng công thức trên báo cáo tài chính của ngân hàng. Những gì một năm báo cáo không cho biết, như phần chi phí vốn được bù lại hay dự phòng tăng khi kinh tế xấu đi, được ước lượng bằng hồi quy trên {n} ngân hàng × 10 năm.',
              'The simulator computes the impact with formulas on the bank\'s own statements. What a single year cannot tell, such as how much funding cost offsets the cut or how provisions rise in a downturn, is estimated by regressions on {n} banks × 10 years.'],
     varTitle: ['Biến, công thức và nguồn dữ liệu', 'Variables, formulas and data sources'],
+    miniBp: ['Mức giảm', 'Rate cut'], miniPhi: ['Chi phí vốn bù', 'Funding offset'],
     bank: ['Ngân hàng', 'Bank'], year: ['Năm nền', 'Base year'],
     bpHint: ['Mức giảm lãi suất cho vay, tính bằng điểm cơ bản: 10 bp = 0,1 điểm %', 'Lending-rate cut in basis points: 10 bp = 0.1 percentage point'],
     monthsU: ['tháng', 'months'],
@@ -898,7 +923,7 @@
     const has = ECON.scenarios.length > 0;
     $('macro-row').hidden = !has;
     if (!has) return;
-    $('macro-seg').innerHTML = ECON.scenarios.map(sc => `<button data-macro="${sc.id}" aria-pressed="${sc.id === S.macro}">${esc(scLabel(sc))}</button>`).join('');
+    $('macro-seg').innerHTML = $('macro-seg2').innerHTML = ECON.scenarios.map(sc => `<button data-macro="${sc.id}" aria-pressed="${sc.id === S.macro}">${esc(scLabel(sc))}</button>`).join('');
     const sc = ECON.scenarios.find(x => x.id === S.macro);
     $('macro-hint').textContent = !sc ? '' : !sc.dllp ? `${LX(sc, 'desc')}.`
       : LX(sc, 'desc') + L(`, chi phí dự phòng ${sc.dllp > 0 ? 'tăng' : 'giảm'} ${f1.format(Math.abs(sc.dllp * 1e4))} bp trên dư nợ.`,
@@ -1168,10 +1193,12 @@
   // ================== render ==================
   function render() {
     const r = S.year === 'all' ? null : row(S.bank, S.year);
-    $('bank').value = S.bank; $('year').value = S.year; $('bp').value = S.bp; $('bpRange').value = Math.min(300, S.bp);
+    $('bank').value = S.bank; $('year').value = S.year; $('bp').value = $('bp2').value = S.bp; $('bpRange').value = $('bpRange2').value = Math.min(300, S.bp);
+    if (document.activeElement !== $('phi2')) $('phi2').value = Math.round(S.phi * 1000) / 10;
+    syncMini();
     ['alpha', 'phi'].forEach(id => { if (document.activeElement !== $(id)) $(id).value = Math.round(S[id] * 1000) / 10; });
     $('bp-pct').textContent = '= ' + f2.format(S.bp / 100) + L(' điểm %', ' pp');
-    document.querySelectorAll('#chips .chip').forEach(c => c.setAttribute('aria-pressed', +c.dataset.bp === S.bp));
+    document.querySelectorAll('#chips .chip, #chips2 .chip').forEach(c => c.setAttribute('aria-pressed', +c.dataset.bp === S.bp));
     document.querySelectorAll('#cmp-seg button').forEach(c => c.setAttribute('aria-pressed', c.dataset.m === S.cmp));
     document.querySelectorAll('#phi-presets button').forEach(c => c.setAttribute('aria-pressed', Math.abs(+c.dataset.phi - S.phi) < 1e-9));
     document.querySelectorAll('.tabs button').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === S.tab));
@@ -1217,16 +1244,21 @@
 
   // khởi tạo
   $('bank').innerHTML = banks.map(b => `<option>${b}</option>`).join('');
-  $('chips').innerHTML = [0, 10, 25, 50, 100].map(p => `<button class="chip num" data-bp="${p}" aria-pressed="false">${p}</button>`).join('');
+  $('chips').innerHTML = $('chips2').innerHTML = [0, 10, 25, 50, 100].map(p => `<button class="chip num" data-bp="${p}" aria-pressed="false">${p}</button>`).join('');
   applyStatic(); syncYear();
   $('bank').addEventListener('change', e => { S.bank = e.target.value; syncYear(); render(); });
   $('year').addEventListener('change', e => { S.year = e.target.value === 'all' ? 'all' : +e.target.value; render(); });
-  $('bp').addEventListener('input', e => setBp(e.target.value));
-  $('bpRange').addEventListener('input', e => setBp(e.target.value));
-  $('chips').addEventListener('click', e => { if (e.target.dataset.bp) setBp(e.target.dataset.bp); });
+  ['bp', 'bpRange', 'bp2', 'bpRange2'].forEach(id => $(id).addEventListener('input', e => setBp(e.target.value)));
+  ['chips', 'chips2'].forEach(id => $(id).addEventListener('click', e => { if (e.target.dataset.bp) setBp(e.target.dataset.bp); }));
+  $('phi2').addEventListener('input', e => { S.phi = Math.max(0, Math.min(100, +e.target.value || 0)) / 100; render(); });
+  // thanh gọn chỉ hiện ở tab Mô phỏng, khi khung điều chỉnh chính đã cuộn khỏi màn hình
+  let ctrlVisible = true;
+  function syncMini() { $('mini').hidden = ctrlVisible || S.tab !== 'sim'; }
+  if ('IntersectionObserver' in window)
+    new IntersectionObserver(([e]) => { ctrlVisible = e.isIntersecting; syncMini(); }, { threshold: 0 }).observe($('controls'));
   $('cmp-seg').addEventListener('click', e => { if (e.target.dataset.m) { S.cmp = e.target.dataset.m; render(); } });
   $('phi-presets').addEventListener('click', e => { if (e.target.dataset.phi != null) { S.phi = +e.target.dataset.phi; render(); } });
-  $('macro-seg').addEventListener('click', e => { if (e.target.dataset.macro) { S.macro = e.target.dataset.macro; render(); } });
+  ['macro-seg', 'macro-seg2'].forEach(id => $(id).addEventListener('click', e => { if (e.target.dataset.macro) { S.macro = e.target.dataset.macro; render(); } }));
   const pickCell = e => { const td = e.target.closest('td[data-macro]'); if (td) { S.macro = td.dataset.macro; S.bp = +td.dataset.bp; render(); } };
   $('tbl-matrix').addEventListener('click', pickCell);
   $('tbl-matrix').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pickCell(e); } });
