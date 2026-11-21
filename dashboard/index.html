@@ -227,7 +227,16 @@
   /* đầu trang gọn: chữ bên trái, bộ chọn bên phải cùng hàng; dải khuyến nghị trải ngang bên dưới */
   .pagehead { display: grid !important; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 24px; align-items: start !important; margin: 2px 0 12px !important; }
   .pagehead h1 { font-size: 22px !important; margin: 0 0 3px !important; max-width: none !important; }
-  .pagehead #subtitle { font-size: 13.5px; max-width: 900px; }
+  /* phụ đề đổi theo bp: không giới hạn bề rộng, chữ số cùng độ rộng; màn hẹp giữ sẵn chỗ 2 dòng để trang không giật */
+  .pagehead { row-gap: 0 !important; }
+  .pagehead .ph-text { display: contents; }
+  .pagehead .brief { grid-column: 1; grid-row: 1; }
+  .pagehead h1 { grid-column: 1; grid-row: 2; }
+  .pagehead .pickers { grid-column: 2; grid-row: 1 / span 2; align-self: center; }
+  .pagehead #subtitle { grid-column: 1 / -1; grid-row: 3; font-size: 13.5px; line-height: 1.45; max-width: none; font-variant-numeric: tabular-nums; }
+  .pagehead .rec { grid-row: 4; margin-top: 8px; }
+  @media (max-width: 1400px) { .pagehead #subtitle { min-height: 2.9em; } }
+  @media (max-width: 980px) { .pagehead .pickers { grid-column: 1; grid-row: 3; margin: 6px 0; } .pagehead #subtitle { grid-row: 4; } .pagehead .rec { grid-row: 5; } }
   .pagehead .brief { margin-bottom: 4px !important; font-size: 12px !important; }
   .pickers { flex-wrap: wrap; justify-content: flex-end; }
   @media (max-width: 980px) { .pagehead { grid-template-columns: 1fr; } .pickers { justify-content: flex-start; } }
