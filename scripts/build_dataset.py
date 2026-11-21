@@ -93,7 +93,8 @@ NPL_GROUPS = [('Nợ đủ tiêu chuẩn', 120), ('Nợ cần chú ý', 121), ('
 CAR_COL = 125
 VTC_COL, RWA_COL = 126, 127  # Báo cáo an toàn vốn: vốn tự có, tổng tài sản có rủi ro
 CARC_COL, CARD_COL = 128, 129  # CAR tính = VTC/RWA; chênh lệch so với CAR báo cáo
-NCOL = 130
+CARS_COL = 130  # dòng "Tỷ lệ an toàn vốn" trong Báo cáo an toàn vốn
+NCOL = 131
 
 
 def load():
@@ -124,10 +125,10 @@ def load():
             v = tm.get(y, {}).get(('CAR', 1))
             if v:  # 0 = ngân hàng không công bố
                 row[CAR_COL] = v
-            for lab, c in (('Vốn tự có', VTC_COL), ('Tổng tài sản có rủi ro', RWA_COL)):
+            for lab, c in (('Vốn tự có', VTC_COL), ('Tổng tài sản có rủi ro', RWA_COL), ('Tỷ lệ an toàn vốn', CARS_COL)):
                 v = cp.get(y, {}).get((lab, 1))
                 if v:
-                    row[c] = v * UNIT
+                    row[c] = v if c == CARS_COL else v * UNIT
     return out
 
 
@@ -162,7 +163,7 @@ def formulas(r, first, last):
     return {i: (x if x.startswith(('=IFERROR', '=IF(')) else f'=IFERROR({x[1:]},"")') for i, x in f.items()}
 
 
-PCT = {105, 106, 107, 108, 109, 110, 112, 113, 114, 115, 118, 125, 128, 129}
+PCT = {105, 106, 107, 108, 109, 110, 112, 113, 114, 115, 118, 125, 128, 129, 130}
 
 if __name__ == '__main__':
     from sample import keep
@@ -180,6 +181,7 @@ if __name__ == '__main__':
     header[RWA_COL] = 'Tổng tài sản có rủi ro (Báo cáo an toàn vốn, triệu VND)'
     header[CARC_COL] = 'CAR tính = Vốn tự có / Tổng TS có rủi ro'
     header[CARD_COL] = 'Chênh lệch CAR tính - CAR báo cáo'
+    header[CARS_COL] = 'CAR (Báo cáo an toàn vốn)'
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = 'DU_LIEU_NH_NAM'
@@ -199,7 +201,7 @@ if __name__ == '__main__':
         first, last = span[k[0]]
         for i, f in formulas(n, first, last).items():
             ws.cell(row=n, column=i + 1, value=f)
-        for i in list(range(120, 128)):
+        for i in list(range(120, 128)) + [CARS_COL]:
             ws.cell(row=n, column=i + 1).font = blue
         for i in PCT:
             ws.cell(row=n, column=i + 1).number_format = '0.00%'

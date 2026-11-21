@@ -31,6 +31,7 @@ def panel():
         g = [r[i] for i in range(120, 125)]
         rec['npl'] = sum(g[2:]) / sum(g) if None not in g and sum(g) else None
         rec['liab'] = None if r[57] is None else r[57] / 1000
+        rec['car_n'], rec['car_cp'] = r[b.CAR_COL], r[b.CARS_COL]  # CAR thuyết minh; CAR báo cáo an toàn vốn
         rows.append(rec)
     df = pd.DataFrame(rows).sort_values(['bank', 'year']).reset_index(drop=True)
     lag = df.groupby('bank').shift(1)
@@ -49,7 +50,7 @@ def panel():
     df['cap'] = df['equity'] / df['ta']
     df['size'] = np.log(df['ta'])
     df['cov'] = df['ppop'] / df['prov']
-    df['car'] = np.where(df['vtc'].notna() & df['rwa'].notna(), df['vtc'] / df['rwa'], np.nan)
+    df['car'], df['car_src'] = zip(*[car_best(r) for r in df.itertuples()])
     # độ nhạy: % LNST mất cho mỗi 10 bp giảm lãi trên toàn bộ dư nợ (thuế 20%)
     df['sens10'] = np.where(df['pat'] > 0, df['loans'] * 0.001 * 0.8 / df['pat'], np.nan)
     lagy = df.groupby('bank')[['yield', 'cost', 'nim', 'roa']].shift(1)
@@ -72,6 +73,26 @@ def panel():
     for c in MACRO_VARS:
         mac[c] = mac[c] / 100
     return df.merge(mac[['year'] + MACRO_VARS], on='year', how='left')
+
+
+CAR_TOL = 0.003     # 0,3 điểm %: ngưỡng coi hai nguồn CAR là khớp
+CAR_FILL_FROM = 2020  # từ 2020 mọi ngân hàng tính CAR theo Thông tư 41, nên lấp bằng CAR công bố không trộn hai cách đo
+
+
+def car_best(r):
+    """CAR của một ngân hàng-năm và nguồn: 'calc' = vốn tự có / RWA; 'fix' = thay bằng CAR công bố khi vốn tự có / RWA
+    mâu thuẫn với cả CAR thuyết minh lẫn dòng CAR trong Báo cáo an toàn vốn (lỗi nhập liệu nguồn, ví dụ VPB 2022–2023);
+    'fill' = không có vốn tự có / RWA, lấp bằng CAR công bố (từ CAR_FILL_FROM)."""
+    num = lambda v: v is not None and v == v
+    calc = r.vtc / r.rwa if num(r.vtc) and num(r.rwa) and r.rwa else None
+    rep = r.car_n if num(r.car_n) else r.car_cp if num(r.car_cp) else None   # ưu tiên thuyết minh (đã kiểm toán)
+    if calc is not None:
+        if rep is None or any(num(v) and abs(calc - v) <= CAR_TOL for v in (r.car_n, r.car_cp)):
+            return calc, 'calc'
+        return rep, 'fix'
+    if rep is not None and r.year >= CAR_FILL_FROM:
+        return rep, 'fill'
+    return np.nan, None
 
 
 def ols(x, y):

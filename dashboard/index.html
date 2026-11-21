@@ -660,8 +660,12 @@
     car_resp: { v: 'roa', sx: 100, sy: 100, xl: () => L('ROA (điểm %)', 'ROA (pp)'), yl: () => L('Δ CAR (điểm %)', 'Δ CAR (pp)'),
       refs: () => [{ slope: 1 / ECON.rwa_ta, label: L(`Công thức mô phỏng ${f2.format(1 / ECON.rwa_ta)}`, `Simulator formula ${f2.format(1 / ECON.rwa_ta)}`) }],
       take: c => { const imp = 1 / ECON.rwa_ta, inCI = imp >= c.lo && imp <= c.hi;
-        return L(`ROA tăng 1 điểm đi kèm CAR tăng ${f2.format(c.b)} điểm. Công thức của mô phỏng ngầm định ${f2.format(imp)}${inCI ? ', nằm trong khoảng tin cậy, nên cách dashboard tính CAR khớp với dữ liệu.' : ', nằm ngoài khoảng tin cậy; cần xem lại cách tính CAR.'}`,
-                 `A 1-point rise in ROA goes with a ${f2.format(c.b)}-point rise in CAR. The simulator's formula implies ${f2.format(imp)}${inCI ? ', inside the confidence interval, so the dashboard\'s CAR calculation is consistent with the data.' : ', outside the confidence interval; the CAR calculation needs review.'}`); },
+        const vi = inCI ? (c.b < imp ? ', nằm trong khoảng tin cậy. Thực tế CAR đổi ít hơn công thức một chút, nên mức giảm CAR trên dashboard là thận trọng.' : ', nằm trong khoảng tin cậy, nên cách dashboard tính CAR khớp với dữ liệu.')
+                       : (imp > c.hi ? ', cao hơn khoảng tin cậy: thực tế CAR đổi ít hơn công thức, nên mức giảm CAR trên dashboard là thận trọng.' : ', thấp hơn khoảng tin cậy: mô phỏng có thể đánh giá thấp mức giảm CAR.');
+        const en = inCI ? (c.b < imp ? ', inside the confidence interval. CAR moves slightly less than the formula in practice, so the CAR fall shown is conservative.' : ', inside the confidence interval, so the dashboard\'s CAR calculation is consistent with the data.')
+                       : (imp > c.hi ? ', above the confidence interval: CAR moves less than the formula in practice, so the CAR fall shown is conservative.' : ', below the confidence interval: the simulator may understate the CAR fall.');
+        return L(`ROA tăng 1 điểm đi kèm CAR tăng ${f2.format(c.b)} điểm. Công thức của mô phỏng ngầm định ${f2.format(imp)}${vi}`,
+                 `A 1-point rise in ROA goes with a ${f2.format(c.b)}-point rise in CAR. The simulator's formula implies ${f2.format(imp)}${en}`); },
       ind: () => 'CAR' },
     llp_macro: { v: 'gdp_growth', byYear: true, bScale: 100, bUnit: () => L(' bp dự phòng / 1 điểm % GDP', ' bp of provisions per 1 pp of GDP'),
       take: c => L(`GDP tăng chậm đi 1 điểm % thì chi phí dự phòng tăng khoảng ${f1.format(-c.b * 100)} bp trên dư nợ${c.p < 0.1 ? '. Hệ số này tạo ra kịch bản Bất lợi và Thuận lợi trong mô phỏng.' : ', nhưng với cách tính sai số này hệ số chưa có ý nghĩa thống kê.'}`,
@@ -827,15 +831,17 @@
   // ---------- vốn ----------
   function capitalBase(r) {
     const calc = r.vtc && r.rwa ? r.vtc / r.rwa : null;
-    if (calc != null && (r.car_rep == null || Math.abs(calc - r.car_rep) < 0.003))
-      return { car0: r.car_rep ?? calc, rwa: r.rwa, est: false,
-               note: r.car_rep == null ? L('CAR = vốn tự có / RWA (không có CAR công bố để đối chiếu)', 'CAR = capital / RWA (no reported CAR to cross-check)')
-                                       : L('Vốn tự có / RWA khớp CAR công bố trong ±0,3 điểm %', 'Capital / RWA matches reported CAR within ±0.3 pp') };
-    if (r.car_rep) {
+    // CAR công bố: thuyết minh (đã kiểm toán), không có thì lấy dòng CAR trong Báo cáo an toàn vốn
+    const rep = r.car_rep ?? r.car_cp ?? null, near = v => v != null && Math.abs(calc - v) < 0.003;
+    if (calc != null && (rep == null || near(r.car_rep) || near(r.car_cp)))
+      return { car0: near(r.car_rep) ? r.car_rep : calc, rwa: r.rwa, est: false,
+               note: rep == null ? L('CAR = vốn tự có / RWA (không có CAR công bố để đối chiếu)', 'CAR = capital / RWA (no reported CAR to cross-check)')
+                                 : L('Vốn tự có / RWA khớp CAR công bố trong ±0,3 điểm %', 'Capital / RWA matches reported CAR within ±0.3 pp') };
+    if (rep) {
       const base = r.vtc ?? r.equity;
-      return { car0: r.car_rep, rwa: base / r.car_rep, est: true,
-               note: calc != null ? L(`Vốn tự có / RWA = ${pct(calc, 2)}, lệch CAR công bố ${pct(r.car_rep, 2)}; dùng CAR công bố, RWA suy ra = vốn tự có / CAR`,
-                                      `Capital / RWA = ${pct(calc, 2)}, differs from reported CAR ${pct(r.car_rep, 2)}; reported CAR used, RWA implied = capital / CAR`)
+      return { car0: rep, rwa: base / rep, est: true,
+               note: calc != null ? L(`Vốn tự có / RWA = ${pct(calc, 2)}, lệch CAR công bố ${pct(rep, 2)} (lỗi dữ liệu nguồn); dùng CAR công bố, RWA suy ra = vốn tự có / CAR`,
+                                      `Capital / RWA = ${pct(calc, 2)}, differs from reported CAR ${pct(rep, 2)} (source data error); reported CAR used, RWA implied = capital / CAR`)
                                   : L('Thiếu vốn tự có/RWA; RWA ước tính = VCSH / CAR công bố (giả định vốn tự có ≈ VCSH)', 'Capital/RWA missing; RWA estimated = equity / reported CAR (assumes capital ≈ equity)') };
     }
     return null;

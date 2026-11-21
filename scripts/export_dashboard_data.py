@@ -74,6 +74,7 @@ if __name__ == '__main__':
         rec['npl_amt'] = round(sum(npl_groups[2:]) / 1000, 3) if None not in npl_groups else None
         rec['npl'] = (sum(npl_groups[2:]) / sum(npl_groups)) if None not in npl_groups and sum(npl_groups) else None
         rec['car_rep'] = r[125]
+        rec['car_cp'] = r[b.CARS_COL]  # CAR trong Báo cáo an toàn vốn
         d = rp.get((code, year), {})
         tot = sum(d.values())
         if d and rec['loans']:
