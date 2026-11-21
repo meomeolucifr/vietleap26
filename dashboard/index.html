@@ -212,6 +212,17 @@
   .lab-out td:first-child, .lab-out th:first-child { text-align: left; }
   .lab-warn { color: var(--warn); font-size: 12.5px; margin-top: 8px; }
   .cmp-take { margin: 0 0 12px; font-size: 13.5px; font-weight: 500; color: var(--ink); max-width: 760px; }
+  .rec { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; margin-top: 10px; padding: 9px 14px; border-radius: var(--r-md);
+         background: var(--accent-soft); max-width: 900px; font-size: 13.5px; line-height: 1.45; }
+  .rec b.big { font-size: 15px; color: var(--accent); }
+  .rec button, .memo-actions button { border: 1px solid var(--accent); background: var(--card); color: var(--accent); border-radius: 999px; padding: 3px 12px; font-size: 12.5px; cursor: pointer; font-weight: 600; }
+  .memo-btn { border: 0; background: var(--hero); color: var(--hero-ink); border-radius: 999px; padding: 8px 16px; font-weight: 600; cursor: pointer; }
+  .memo-wrap { position: fixed; inset: 0; z-index: 40; background: rgba(10, 18, 32, .45); display: grid; place-items: center; padding: 20px; }
+  .memo { background: var(--card); color: var(--ink); border-radius: var(--r-lg); box-shadow: var(--shadow); width: min(760px, 100%); max-height: 88vh; overflow: auto; padding: 24px 28px; }
+  .memo h2 { margin: 0 0 4px; font-size: 19px; } .memo h3 { margin: 16px 0 6px; font-size: 14px; color: var(--accent); }
+  .memo ul { margin: 0; padding-left: 20px; } .memo li { margin: 3px 0; font-size: 13.5px; line-height: 1.5; }
+  .memo .meta { color: var(--muted); font-size: 12.5px; }
+  .memo-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px; }
   .pagehead .brief { font-size: 13px; color: var(--accent); font-weight: 600; margin: 0 0 6px; max-width: 900px; }
   .term { border-bottom: 1px dotted currentColor; cursor: help; }
   .presets { display: flex; gap: 4px; margin-top: 6px; flex-wrap: wrap; }
@@ -276,8 +287,10 @@
       <p class="brief" data-t="brief"></p>
       <h1 id="title">…</h1>
       <p id="subtitle"></p>
+      <div class="rec" id="rec" hidden></div>
     </div>
     <div class="pickers">
+      <button class="memo-btn" id="memo-btn" type="button" data-t="memoBtn"></button>
       <div class="pill-select"><label for="bank" data-t="bank"></label><select id="bank"></select></div>
       <div class="pill-select"><label for="year" data-t="year"></label><select id="year"></select></div>
     </div>
@@ -412,6 +425,7 @@
 
   <footer id="footer"></footer>
 </div>
+<div class="memo-wrap" id="memo-wrap" hidden><div class="memo" role="dialog" aria-modal="true" aria-labelledby="memo-h" id="memo"></div></div>
 <div id="tip" role="tooltip"></div>
 
 <script src="data.js"></script>
@@ -476,6 +490,7 @@
     labDesc: ['Chọn một mô hình có sẵn hoặc tự chọn biến; kết quả tính lại ngay trên trình duyệt với dữ liệu {n} ngân hàng × 10 năm. Cách tính giống hệt mã Python của nhóm (linearmodels), đã đối chiếu khớp đến 8 chữ số với cả 6 mô hình đề xuất.',
               'Pick a ready-made model or choose your own variables; results are re-estimated in the browser on {n} banks × 10 years. The method is identical to the team\'s Python code (linearmodels) and matches all 6 proposed models to 8 digits.'],
     miniBp: ['Mức giảm', 'Rate cut'],
+    memoBtn: ['Tóm tắt cho ALCO', 'Summary for ALCO'],
     qHint: ['Do ban lãnh đạo chọn, không phải quy định. Đề xuất ALCO dùng 90%.', 'Set by management, not by regulation. The ALCO proposal uses 90%.'], miniPhi: ['Chi phí vốn bù', 'Funding offset'],
     bank: ['Ngân hàng', 'Bank'], year: ['Năm nền', 'Base year'],
     bpHint: ['Mức giảm lãi suất cho vay, tính bằng điểm cơ bản: 10 bp = 0,1 điểm %', 'Lending-rate cut in basis points: 10 bp = 0.1 percentage point'],
@@ -865,6 +880,97 @@
   const fx = txt => `<button class="formula-btn" type="button" data-tip="${esc(txt)}">${L('Cách tính', 'How it\'s computed')}</button>`;
   const scLabel = sc => sc ? LX(sc, 'label') : '';
 
+  // ---------- mức an toàn khuyến nghị ----------
+  // mức giảm lớn nhất (bp nguyên) đạt cả ba ngưỡng trong mọi kịch bản vĩ mô; trả về cả ràng buộc chặt nhất
+  function checks(r, bp, p) {
+    const out = [];
+    (ECON.scenarios.length ? ECON.scenarios : [{ id: 'base' }]).forEach(sc => {
+      const s = sim(r, bp, { ...p, macro: sc.id });
+      if (s.retain != null && s.retain < p.q - 1e-9) out.push({ sc, k: 'pat' });
+      if (s.cap && s.car1 < CAR_MIN) out.push({ sc, k: 'car' });
+      if (s.cov1 != null && s.cov1 < 1) out.push({ sc, k: 'cov' });
+    });
+    return out;
+  }
+  function safeCut(r, p = S) {
+    if (!(r.pat > 0)) return null;
+    if (checks(r, 0, p).length) return { bp: 0, fail: checks(r, 0, p)[0] };
+    if (!checks(r, 500, p).length) return { bp: 500, capped: true };
+    let lo = 0, hi = 500;   // checks đơn điệu theo bp vì tác động tuyến tính
+    while (hi - lo > 1) { const m = (lo + hi) >> 1; if (checks(r, m, p).length) hi = m; else lo = m; }
+    return { bp: lo, fail: checks(r, lo + 1, p)[0] };
+  }
+  const KNAME = { pat: () => L(`mục tiêu giữ ${f0.format(S.q * 100)}% lợi nhuận`, `the ${f0.format(S.q * 100)}% profit target`), car: () => L('CAR tối thiểu 8%', 'the 8% CAR minimum'), cov: () => L('trang trải dự phòng ≥ 1 lần', 'provision coverage ≥ 1×') };
+  function drawRec(r) {
+    const el = $('rec'), c = safeCut(r);
+    if (!c) { el.hidden = true; return; }
+    el.hidden = false;
+    const scName = sc => sc && sc.id !== 'base' ? L(`trong kịch bản ${scLabel(sc).toLowerCase()}`, `in the ${scLabel(sc).toLowerCase()} scenario`) : L('ngay cả trong kịch bản cơ sở', 'even in the base scenario');
+    el.innerHTML = c.bp === 0
+      ? `<span>${L(`<b class="big">Không có mức giảm an toàn</b> cho ${r.bank} năm ${r.year}: chưa giảm đã trượt ${KNAME[c.fail.k]()} ${scName(c.fail.sc)}.`, `<b class="big">No safe cut</b> for ${r.bank} in ${r.year}: it already misses ${KNAME[c.fail.k]()} ${scName(c.fail.sc)}.`)}</span>`
+      : `<span>${L(`<b class="big">Mức an toàn khuyến nghị: tối đa ${c.bp}${c.capped ? '+' : ''} bp.</b> Đạt cả ba ngưỡng (lợi nhuận, CAR, dự phòng) trong cả ba kịch bản vĩ mô${c.fail ? `; ràng buộc chặt nhất là ${KNAME[c.fail.k]()} ${scName(c.fail.sc)}` : ''}.`,
+                    `<b class="big">Recommended safe cut: up to ${c.bp}${c.capped ? '+' : ''} bp.</b> Meets all three thresholds (profit, CAR, provisions) in all three macro scenarios${c.fail ? `; the binding limit is ${KNAME[c.fail.k]()} ${scName(c.fail.sc)}` : ''}.`)}</span>
+         ${c.bp !== S.bp ? `<button type="button" data-setbp="${c.bp}">${L(`Xem ở ${c.bp} bp`, `Show at ${c.bp} bp`)}</button>` : ''}`;
+  }
+
+  // ---------- tóm tắt cho ALCO: một trang mang đi họp, có nút sao chép ----------
+  function memoContent(r) {
+    const s = sim(r, S.bp), sb = sim(r, S.bp, { ...S, macro: 'bad' }), c = safeCut(r), q = f0.format(S.q * 100);
+    const hasBad = ECON.scenarios.some(x => x.id === 'bad'), retain = v => v == null ? '–' : pct(v);
+    const status = (v, ok) => ok ? L('đạt', 'met') : L('KHÔNG đạt', 'NOT met');
+    const ci = PASS_BANK && Math.abs(S.phi - PHI_DATA) < 1e-9 ? PASS_BANK.coefs.find(k => k.var === 'd_yield') : null;
+    const mx = ci ? [sim(r, S.bp, { ...S, phi: ci.lo }).maxBp, sim(r, S.bp, { ...S, phi: ci.hi }).maxBp] : null;
+    const sec = [
+      [L('Đề xuất', 'Proposal'), [
+        L(`Giảm lãi suất cho vay ${f0.format(S.bp)} bp (${f2.format(S.bp / 100)} điểm %) trong 12 tháng.`, `Cut lending rates by ${f0.format(S.bp)} bp (${f2.format(S.bp / 100)} pp) for 12 months.`),
+        c ? L(`Mức an toàn khuyến nghị: tối đa ${c.bp} bp (đạt cả ba ngưỡng trong cả ba kịch bản vĩ mô). Mức đề xuất ${S.bp <= c.bp ? 'nằm trong' : 'VƯỢT'} giới hạn này.`,
+              `Recommended safe cut: up to ${c.bp} bp (all three thresholds in all three macro scenarios). The proposal is ${S.bp <= c.bp ? 'within' : 'ABOVE'} this limit.`) : L('Ngân hàng lỗ năm nền: không có mức giảm an toàn.', 'Loss in the base year: no safe cut.'),
+      ]],
+      [L('Lợi ích và ai gánh (12 tháng)', 'Benefit and who pays (12 months)'), [
+        L(`Người vay tiết kiệm ${ty(s.save)} tỷ đồng (${f2.format(s.perBillion)} triệu đồng cho mỗi 1 tỷ dư nợ được giảm lãi).`, `Borrowers save VND ${ty(s.save)} bn (VND ${f2.format(s.perBillion)} million per VND 1 bn of loans repriced).`),
+        L(`Cổ đông ${ty(s.dPAT)} tỷ · người gửi tiền ${ty(s.dep)} tỷ (chi phí vốn bù ${pct(S.phi, 0)}) · ngân sách ${ty(s.tax)} tỷ (thuế).`, `Shareholders VND ${ty(s.dPAT)} bn · depositors ${ty(s.dep)} bn (funding offset ${pct(S.phi, 0)}) · state budget ${ty(s.tax)} bn (tax).`),
+      ]],
+      [L('Chỉ số an toàn sau khi giảm', 'Safety indicators after the cut'), [
+        L(`Lợi nhuận sau thuế: ${ty(r.pat)} → ${ty(s.pat1)} tỷ, giữ ${retain(s.retain)} (mục tiêu ${q}%: ${status(0, s.retain >= S.q)})${hasBad ? `; kịch bản bất lợi giữ ${retain(sb.retain)}` : ''}.`,
+          `Profit after tax: ${ty(r.pat)} → ${ty(s.pat1)} bn, ${retain(s.retain)} kept (target ${q}%: ${status(0, s.retain >= S.q)})${hasBad ? `; adverse scenario keeps ${retain(sb.retain)}` : ''}.`),
+        s.cap ? L(`CAR: ${pct(s.cap.car0, 2)} → ${pct(s.car1, 2)} (tối thiểu 8%: ${status(0, s.car1 >= CAR_MIN)})${hasBad ? `; bất lợi ${pct(sb.car1, 2)}` : ''}.`, `CAR: ${pct(s.cap.car0, 2)} → ${pct(s.car1, 2)} (8% minimum: ${status(0, s.car1 >= CAR_MIN)})${hasBad ? `; adverse ${pct(sb.car1, 2)}` : ''}.`) : L('CAR: thiếu dữ liệu vốn.', 'CAR: capital data missing.'),
+        L(`Trang trải dự phòng: ${times(s.cov0)} → ${times(s.cov1)}${hasBad ? `; bất lợi ${times(sb.cov1)}` : ''}.`, `Provision coverage: ${times(s.cov0)} → ${times(s.cov1)}${hasBad ? `; adverse ${times(sb.cov1)}` : ''}.`),
+      ]],
+      [L('Giả định chính', 'Key assumptions'), [
+        s.useRp ? L(`Thời điểm đổi lãi theo bảng kỳ định lại trong BCTC ${r.year}: ${pct(s.E / r.loans, 0)} dư nợ hưởng lãi mới tính theo thời gian.`, `Repricing timing from the ${r.year} repricing table: ${pct(s.E / r.loans, 0)} of loans at the new rate, time-weighted.`)
+                : L(`Toàn bộ dư nợ đổi lãi trong ${f1.format(S.months)} tháng (cận trên).`, `All loans reprice within ${f1.format(S.months)} months (upper bound).`),
+        L(`Chi phí vốn bù ${pct(S.phi, 0)}${ci ? ' (ước lượng từ 25 ngân hàng × 10 năm khi một ngân hàng tự giảm lãi)' : ''}; thuế 20%; tài sản rủi ro không đổi.`, `Funding offset ${pct(S.phi, 0)}${ci ? ' (estimated on 25 banks × 10 years for a bank cutting alone)' : ''}; tax 20%; risk-weighted assets unchanged.`),
+      ]],
+      [L('Rủi ro cần lưu ý', 'Risks to note'), [
+        mx && ok(mx[0]) ? L(`Phần bù chi phí vốn không chắc chắn (${pct(ci.lo, 0)}–${pct(ci.hi, 0)}): mức giảm tối đa giữ ${q}% lợi nhuận dao động ${f0.format(Math.floor(mx[0]))}–${f0.format(Math.floor(mx[1]))} bp.`, `The funding offset is uncertain (${pct(ci.lo, 0)}–${pct(ci.hi, 0)}): the maximum cut keeping ${q}% of profit ranges ${f0.format(Math.floor(mx[0]))}–${f0.format(Math.floor(mx[1]))} bp.`)
+                        : L('Nếu người gửi tiền không chấp nhận lãi thấp hơn, thiệt hại lợi nhuận lớn hơn (xem mức bù 0%).', 'If depositors do not accept lower rates, the profit hit is larger (see the 0% offset).'),
+        hasBad ? L(`Nếu kinh tế xấu như giai đoạn Covid, chi phí dự phòng tăng; mức tối đa còn ${ok(sb.maxBp) ? f0.format(Math.floor(sb.maxBp)) + ' bp' : '–'}.`, `In a Covid-like downturn provisions rise; the maximum falls to ${ok(sb.maxBp) ? f0.format(Math.floor(sb.maxBp)) + ' bp' : '–'}.`) : '',
+      ].filter(Boolean)],
+    ];
+    const title = L(`Đề xuất giảm lãi suất cho vay · ${r.bank} · năm nền ${r.year}`, `Lending-rate cut proposal · ${r.bank} · base year ${r.year}`);
+    const meta = L(`Nguồn: BCTC hợp nhất ${r.year} (FiinPro-X); mô hình Rate Cut Lab (Team 1). ${location.origin.startsWith('http') ? location.href.split('#')[0] : ''}`, `Source: ${r.year} consolidated statements (FiinPro-X); Rate Cut Lab model (Team 1). ${location.origin.startsWith('http') ? location.href.split('#')[0] : ''}`);
+    const html = `<h2 id="memo-h">${esc(title)}</h2><div class="meta">${esc(meta)}</div>` +
+      sec.map(([h, items]) => `<h3>${esc(h)}</h3><ul>${items.map(t => `<li>${esc(t)}</li>`).join('')}</ul>`).join('');
+    const text = [title, meta, ''].concat(...sec.map(([h, items]) => [h.toUpperCase(), ...items.map(t => '- ' + t), ''])).join('\n');
+    return { html, text };
+  }
+  function openMemo() {
+    const r = S.year === 'all' ? row(S.bank, yearsOf(S.bank)[0]) : row(S.bank, S.year);
+    if (!r) return;
+    const m = memoContent(r);
+    $('memo').innerHTML = m.html + `<div class="memo-actions"><span class="meta" id="memo-msg" style="margin-right:auto"></span>
+      <button type="button" id="memo-copy">${L('Sao chép nội dung', 'Copy text')}</button><button type="button" id="memo-close">${L('Đóng', 'Close')}</button></div>`;
+    $('memo-wrap').hidden = false; $('memo-close').focus();
+    $('memo-copy').onclick = () => {
+      const done = ok => { $('memo-msg').textContent = ok ? L('Đã sao chép, dán vào email hoặc tài liệu họp.', 'Copied; paste into an email or meeting paper.') : L('Không sao chép được; hãy bôi đen và sao chép thủ công.', 'Copy failed; select the text and copy it manually.'); };
+      try { navigator.clipboard.writeText(m.text).then(() => done(true), () => done(false)); } catch (e) { done(false); }
+    };
+    $('memo-close').onclick = closeMemo;
+  }
+  function closeMemo() { $('memo-wrap').hidden = true; $('memo-btn').focus(); }
+
+  // tiêu đề chỉ xét kịch bản vĩ mô đang chọn; ghi rõ để không lẫn với mức khuyến nghị (xét cả ba kịch bản)
+  const scQual = () => { const sc = ECON.scenarios.find(x => x.id === S.macro); return sc ? L(` (kịch bản ${scLabel(sc).toLowerCase()})`, ` (${scLabel(sc).toLowerCase()} scenario)`) : ''; };
   // ---------- tiêu đề ----------
   function drawHead(r, s) {
     let t;
@@ -873,7 +979,7 @@
     else if (s.maxBp == null) t = L(`Với giả định hiện tại, giảm lãi không làm ${r.bank} mất lợi nhuận`, `Under these assumptions a rate cut costs ${r.bank} no profit`);
     else if (s.maxBp < 1) t = L(`Trong kịch bản ${scLabel(scen(S.macro)).toLowerCase()}, ${r.bank} không còn dư địa giảm lãi mà vẫn giữ ${q}% lợi nhuận`,
                                 `In the ${scLabel(scen(S.macro)).toLowerCase()} scenario, ${r.bank} has no room to cut and still keep ${q}% of profit`);
-    else t = L(`${r.bank} giảm được tối đa ${f0.format(Math.floor(s.maxBp))} bp mà vẫn giữ ${q}% lợi nhuận`, `${r.bank} can cut lending rates by up to ${f0.format(Math.floor(s.maxBp))} bp and keep ${q}% of profit`);
+    else t = L(`${r.bank} giảm được tối đa ${f0.format(Math.floor(s.maxBp))} bp mà vẫn giữ ${q}% lợi nhuận`, `${r.bank} can cut lending rates by up to ${f0.format(Math.floor(s.maxBp))} bp and keep ${q}% of profit`) + scQual();
     $('title').textContent = t;
     const chg = r.pat > 0 ? (s.patChg < 0 ? L('giảm ', 'falls ') : L('tăng ', 'rises ')) + pct(Math.abs(s.patChg)) : L('đổi ', 'changes by ') + sTy(s.pat1 - r.pat) + ' ' + BN();
     $('subtitle').textContent = L(`Ở mức ${f0.format(S.bp)} bp, người vay tiết kiệm ${ty(s.save)} tỷ đồng mỗi năm, còn lợi nhuận sau thuế ${chg}`,
@@ -1456,10 +1562,11 @@
     ['sim', 'met'].forEach(t => $('tab-' + t).hidden = S.tab !== t);
     drawMacroRow();
     $('matrix-card').hidden = S.year === 'all' || !ECON.scenarios.length;
-    if (S.year === 'all') { renderAll(); return; }
+    if (S.year === 'all') { $('rec').hidden = true; renderAll(); return; }
     if (!r) return;
     const s = sim(r, S.bp);
     drawHead(r, s);
+    drawRec(r);
     if (S.tab === 'sim') {
       $('sens-title').textContent = L('Giảm bao nhiêu thì còn giữ được mục tiêu lợi nhuận?', 'How far can rates be cut before missing the profit target?');
       drawKpis(r, s); drawSens(r, s); drawCmp(); drawScen(r);
@@ -1541,6 +1648,10 @@
   document.querySelector('.tabs').addEventListener('click', e => { if (e.target.dataset.tab) { S.tab = e.target.dataset.tab; render(); scrollTo({ top: 0 }); } });
   $('timing-presets').addEventListener('click', e => { const t = e.target.dataset.timing; if (!t) return;
     if (t === 'reprice') S.timing = 'reprice'; else { S.timing = 'manual'; S.months = 12; } render(); });
+  $('rec').addEventListener('click', e => { if (e.target.dataset.setbp) setBp(e.target.dataset.setbp); });
+  $('memo-btn').addEventListener('click', openMemo);
+  $('memo-wrap').addEventListener('click', e => { if (e.target === $('memo-wrap')) closeMemo(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('memo-wrap').hidden) closeMemo(); });
   $('q-seg').addEventListener('click', e => { if (e.target.dataset.q) { S.q = +e.target.dataset.q; render(); } });
   $('months').addEventListener('input', () => { S.timing = 'manual'; });   // gõ số tháng = chuyển sang nhập tay
   [['alpha', 100], ['months', 12], ['phi', 100]].forEach(([id, hi]) =>
