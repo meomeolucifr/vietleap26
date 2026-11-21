@@ -156,10 +156,10 @@ Method & data tab:
   provisions by year (two small charts, no dual axis).
 - Under each model card, one plain-language "How to read" sentence.
 - "Run your own regression": dependent variable is one safety indicator (ROA, CAR, NIM, provision coverage), regressors
-  are GDP growth, average CPI and system credit growth plus financial-statement ratios (ROA, ROE, NIM, CAR, CIR,
-  NPL, equity/assets, size, loans/assets, LDR, loan growth, non-interest income share) other than the dependent
-  variable; bank FE and 1% trimming fixed, Driscoll-Kraay or robust SE;
-  coefficient table with CI bars, one sentence per coefficient, and a chart.
+  are financial-statement ratios (ROA, ROE, NIM, CAR, provision coverage, CIR, NPL, equity/assets, size, loans/assets,
+  LDR, loan growth, non-interest income share) other than the dependent variable, no macro variables; bank FE and 1%
+  trimming fixed, Driscoll-Kraay or robust SE; coefficient table with a VIF column (bank-demeaned regressors; mark
+  above 5, warn above 10), CI bars, one sentence per coefficient, and a chart.
 - Variables table (formula, statement line, GSO/SBV source), source data traced to statement lines, formulas, assumptions and limitations, glossary (hover dotted terms for definitions).
 Write text as short natural sentences; keep technical detail in tooltips. Test in a browser and take screenshots to
 check for overlapping labels, overflow and console errors.

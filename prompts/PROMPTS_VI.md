@@ -143,10 +143,10 @@ Tab Phương pháp & dữ liệu:
   2020–2025, không có nút tuỳ chọn. Thẻ dự phòng vẽ GDP và chi phí dự phòng theo năm (hai biểu đồ nhỏ, không trục kép).
 - Dưới mỗi thẻ mô hình có một câu "Cách đọc" bằng lời thường.
 - "Tự chạy hồi quy": biến phụ thuộc là một chỉ số an toàn (ROA, CAR, NIM, khả năng trang trải dự phòng), biến giải
-  thích là tăng trưởng GDP, CPI bình quân, tăng trưởng tín dụng toàn hệ thống cùng các chỉ số tài chính trên BCTC (ROA,
-  ROE, NIM, CAR, CIR, nợ xấu, VCSH/TTS, quy mô, cho vay/TTS, LDR, tăng trưởng dư nợ, tỷ trọng thu nhập ngoài lãi) khác
-  biến phụ thuộc; cố định FE ngân hàng và bỏ 1% đuôi,
-  SE Driscoll-Kraay hoặc robust; bảng hệ số có thanh CI, mỗi hệ số một câu diễn giải, và biểu đồ.
+  thích là các chỉ số tài chính trên BCTC (ROA, ROE, NIM, CAR, khả năng trang trải dự phòng, CIR, nợ xấu, VCSH/TTS, quy
+  mô, cho vay/TTS, LDR, tăng trưởng dư nợ, tỷ trọng thu nhập ngoài lãi) khác biến phụ thuộc, không dùng biến vĩ mô; cố
+  định FE ngân hàng và bỏ 1% đuôi, SE Driscoll-Kraay hoặc robust; bảng hệ số có cột VIF (trên biến đã khử hiệu ứng
+  ngân hàng; đánh dấu trên 5, cảnh báo trên 10), thanh CI, mỗi hệ số một câu diễn giải, và biểu đồ.
 - Bảng biến (công thức, dòng BCTC, nguồn Cục Thống kê/NHNN), số liệu nền truy về dòng nguồn, công thức, giả định và hạn chế, thuật ngữ (rê chuột chữ gạch chấm để xem giải thích).
 Chữ viết thành câu tự nhiên, gọn; giải thích kỹ thuật để trong tooltip. Chạy thử trên trình duyệt, chụp màn hình
 kiểm tra nhãn đè, tràn, lỗi console.

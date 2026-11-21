@@ -141,10 +141,16 @@
       avp = rx.map((v, i) => ({ bank: ent[i], year: tim[i], x: v, y: ry[i] }));
     }
 
+    // VIF: hồi quy từng biến giải thích theo các biến còn lại trên cùng mẫu, sau khi đã khử hiệu ứng cố định;
+    // VIF = 1 / (1 − R²). Một biến duy nhất thì VIF = 1
+    const vif = X.map((col, j) => { const others = X.filter((_, q) => q !== j); if (!others.length) return 1;
+      const r = residualize(col, others), ss = col.reduce((s, v) => s + v * v, 0), sr = r.reduce((s, v) => s + v * v, 0);
+      return ss > 0 && sr > 0 ? ss / sr : Infinity; });
+
     return {
       avp, n, banks: nE, years: [Math.min(...tim), Math.max(...tim)], r2_within: 1 - ssr / sst, df: dfRes,
       coefs: spec.x.map((c, j) => { const se = Math.sqrt(V[j][j]), t = beta[j] / se;
-        return { var: c, b: beta[j], se, t, p: tTwoSided(t, dfRes), lo: beta[j] - tc * se, hi: beta[j] + tc * se }; }),
+        return { var: c, b: beta[j], se, t, p: tTwoSided(t, dfRes), lo: beta[j] - tc * se, hi: beta[j] + tc * se, vif: vif[j] }; }),
     };
   }
 

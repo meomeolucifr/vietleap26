@@ -460,7 +460,7 @@
 <script src="data.js?v=20261121b"></script>
 <script src="econ.js?v=20261121b"></script>
 <script src="panel.js?v=20261121b"></script>
-<script src="regress.js?v=20261121b"></script>
+<script src="regress.js?v=20261121c"></script>
 <script>
 (() => {
   'use strict';
@@ -516,8 +516,8 @@
     mmDesc: ['Mỗi biểu đồ là một mô hình hồi quy panel. Mỗi chấm là một ngân hàng-năm sau khi đã loại khác biệt riêng của từng ngân hàng, biến động chung của từng năm và các biến kiểm soát; độ dốc đường xanh đúng bằng hệ số hồi quy. Đường nét đứt là giả định mà mô phỏng đang dùng. Cả bốn mô hình dùng chung dữ liệu 2020–2025, giai đoạn mọi ngân hàng tính CAR theo Thông tư 41.',
              'Each chart is one panel regression. Each dot is a bank-year after removing each bank\'s fixed differences, each year\'s common moves and the controls; the slope of the blue line equals the regression coefficient. Dashed lines are what the simulator assumes. All four models use the same 2020–2025 data, the period in which every bank reports CAR under Circular 41.'],
     labTitle: ['Tự chạy hồi quy', 'Run your own regression'],
-    labDesc: ['Chọn một chỉ số an toàn làm biến phụ thuộc, rồi chọn biến độc lập trong nhóm điều kiện vĩ mô và nhóm chỉ số tài chính trên báo cáo tài chính. Kết quả tính lại ngay trên trình duyệt với dữ liệu {n} ngân hàng × 10 năm, cùng cách tính với mã Python của nhóm (linearmodels).',
-              'Pick a safety indicator as the dependent variable, then choose regressors from macro conditions and financial-statement ratios. Results are re-estimated in the browser on {n} banks × 10 years, with the same method as the team\'s Python code (linearmodels).'],
+    labDesc: ['Chọn một chỉ số an toàn làm biến phụ thuộc, rồi chọn biến độc lập trong các chỉ số tài chính trên báo cáo tài chính. Cột VIF kiểm tra các biến độc lập có trùng thông tin nhau không. Kết quả tính lại ngay trên trình duyệt với dữ liệu {n} ngân hàng × 10 năm, cùng cách tính với mã Python của nhóm (linearmodels).',
+              'Pick a safety indicator as the dependent variable, then choose regressors from financial-statement ratios. The VIF column checks whether the regressors overlap. Results are re-estimated in the browser on {n} banks × 10 years, with the same method as the team\'s Python code (linearmodels).'],
     miniBp: ['Mức giảm', 'Rate cut'],
     assumpTitle: ['Giả định', 'Assumptions'],
     memoBtn: ['Tóm tắt cho ALCO', 'Summary for ALCO'],
@@ -727,21 +727,19 @@
   }
 
   // ---------- tự chạy hồi quy (dashboard/regress.js) ----------
-  // chỉ số an toàn (biến phụ thuộc) theo điều kiện vĩ mô và các chỉ số tài chính trên BCTC (biến giải thích). Biến vĩ mô
-  // giống nhau cho mọi ngân hàng trong năm nên không dùng hiệu ứng năm; giữ cố định khác biệt riêng từng ngân hàng (FE
-  // ngân hàng) và bỏ 1% hai đuôi. Đơn vị biến giải thích: pp = tỷ lệ (đọc theo 1 điểm %), log = quy mô, x = số lần.
+  // chỉ số an toàn (biến phụ thuộc) theo các chỉ số tài chính trên BCTC của chính ngân hàng (biến độc lập); giữ cố định
+  // khác biệt riêng từng ngân hàng (FE ngân hàng) và bỏ 1% hai đuôi; VIF kiểm tra tương quan giữa các biến độc lập.
+  // Đơn vị biến độc lập: pp = tỷ lệ (đọc theo 1 điểm %), log = quy mô, x = số lần.
   const LAB_Y = { roa: ['Lợi nhuận sau thuế / tổng tài sản (ROA)', 'Profit after tax / total assets (ROA)'], car: ['CAR', 'CAR'],
                   nim: ['NIM', 'NIM'], cov: ['Khả năng trang trải dự phòng (lần)', 'Provision coverage (×)'] };
-  const LAB_MACRO = { gdp_growth: ['Tăng trưởng GDP', 'GDP growth', 'pp'], cpi_avg: ['Lạm phát CPI bình quân', 'Average CPI inflation', 'pp'],
-                      credit_growth: ['Tăng trưởng tín dụng toàn hệ thống', 'System credit growth', 'pp'] };
   const LAB_FIN = { roa: ['ROA', 'ROA', 'pp'], roe: ['ROE', 'ROE', 'pp'], nim: ['NIM', 'NIM', 'pp'], car: ['CAR', 'CAR', 'pp'],
                     cov: ['Khả năng trang trải dự phòng', 'Provision coverage', 'x'], cir: ['Chi phí / thu nhập (CIR)', 'Cost / income (CIR)', 'pp'],
                     npl: ['Tỷ lệ nợ xấu', 'NPL ratio', 'pp'], cap: ['Vốn chủ sở hữu / tổng tài sản', 'Equity / total assets', 'pp'],
                     size: ['Quy mô (log tổng tài sản)', 'Size (log total assets)', 'log'], loans_ta: ['Cho vay / tổng tài sản', 'Loans / total assets', 'pp'],
                     ldr: ['Cho vay / tiền gửi (LDR)', 'Loans / deposits (LDR)', 'pp'], loang: ['Tăng trưởng dư nợ của ngân hàng', 'Bank loan growth', 'pp'],
                     nonii: ['Tỷ trọng thu nhập ngoài lãi', 'Non-interest income share', 'pp'] };
-  const LAB_X = { ...LAB_MACRO, ...LAB_FIN }, LAB_ORDER = [...Object.keys(LAB_MACRO), ...Object.keys(LAB_FIN)];
-  const LAB = { spec: { y: 'roa', x: Object.keys(LAB_MACRO), entity: true, time: false, trim: 1, cov: 'kernel' } };
+  const LAB_X = LAB_FIN, LAB_ORDER = Object.keys(LAB_FIN);
+  const LAB = { spec: { y: 'roa', x: ['cir', 'npl', 'cap', 'size', 'loans_ta'], entity: true, time: false, trim: 1, cov: 'kernel' } };
   function labLabel(c, asX) { const t = (asX ? LAB_X[c] : LAB_Y[c]) || LAB_X[c] || LAB_Y[c]; return t ? L(t[0], t[1]) : (S.lang === 'en' ? PANEL.labels_en : PANEL.labels)[c] || c; }
   function drawLab() {
     if (!PANEL || !window.Regress) { $('lab-card').hidden = true; return; }
@@ -749,12 +747,10 @@
     $('lab-ctl').innerHTML = `
       <div><span class="k-label">${L('Chỉ số an toàn (biến phụ thuộc)', 'Safety indicator (dependent variable)')}</span>
         <select id="lab-y">${Object.keys(LAB_Y).filter(c => PANEL.cols.includes(c)).map(c => `<option value="${c}" ${c === sp.y ? 'selected' : ''}>${esc(labLabel(c))}</option>`).join('')}</select></div>
-      <div><span class="k-label">${L('Biến độc lập: điều kiện vĩ mô', 'Regressors: macro conditions')}</span><div class="pick" id="lab-x">${Object.keys(LAB_MACRO).map(c =>
-        `<button data-x="${c}" aria-pressed="${sp.x.includes(c)}">${esc(labLabel(c, true))}</button>`).join('')}</div></div>
-      <div><span class="k-label">${L('Biến độc lập: chỉ số tài chính trên BCTC', 'Regressors: financial-statement ratios')}</span><div class="pick">${Object.keys(LAB_FIN).filter(c => c !== sp.y && PANEL.cols.includes(c)).map(c =>
+      <div><span class="k-label">${L('Biến độc lập: chỉ số tài chính trên BCTC', 'Regressors: financial-statement ratios')}</span><div class="pick" id="lab-x">${Object.keys(LAB_FIN).filter(c => c !== sp.y && PANEL.cols.includes(c)).map(c =>
         `<button data-x="${c}" aria-pressed="${sp.x.includes(c)}">${esc(labLabel(c, true))}</button>`).join('')}</div></div>
       <div><span class="k-label">${L('Sai số chuẩn', 'Standard errors')}</span>
-        <select id="lab-cov">${[['kernel', L('Driscoll-Kraay (khuyên dùng cho biến vĩ mô)', 'Driscoll-Kraay (recommended for macro variables)')], ['robust', 'Robust (White)']].map(([v, t]) => `<option value="${v}" ${v === sp.cov ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
+        <select id="lab-cov">${[['kernel', 'Driscoll-Kraay'], ['robust', 'Robust (White)']].map(([v, t]) => `<option value="${v}" ${v === sp.cov ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
       <p class="desc" style="margin:0">${L('Đã loại khác biệt cố định giữa các ngân hàng và bỏ 1% quan sát cực đoan ở mỗi đầu. Chọn CAR làm biến độc lập thì mẫu chỉ còn từ 2019.', 'Fixed differences between banks are removed and the most extreme 1% at each end is dropped. Choosing CAR as a regressor limits the sample to 2019 onwards.')}</p>`;
     drawLabResult();
   }
@@ -770,6 +766,13 @@
     const fp = p => p < 0.001 ? '<' + nf(3).format(0.001) : nf(3).format(p);
     const bar = c => { const w = 120, h = 18, R = Math.max(Math.abs(c.lo), Math.abs(c.hi)) * 1.15 || 1, X = v => w / 2 + v / R * (w / 2 - 6), col = c.p < 0.05 ? 'var(--accent)' : 'var(--muted)';
       return `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" aria-hidden="true"><line x1="${w / 2}" x2="${w / 2}" y1="1" y2="${h - 1}" stroke="var(--line-2)"/><line x1="${X(c.lo)}" x2="${X(c.hi)}" y1="${h / 2}" y2="${h / 2}" stroke="${col}" stroke-width="2" stroke-linecap="round"/><circle cx="${X(c.b)}" cy="${h / 2}" r="4" fill="${col}"/></svg>`; };
+    // VIF: dưới 5 ổn, 5–10 cần lưu ý, trên 10 đa cộng tuyến nặng
+    const vifCell = v => !isFinite(v) ? '∞' : v >= 10 ? `<b style="color:var(--crit)">${f1.format(v)}</b>` : v >= 5 ? `<b style="color:var(--warn)">${f1.format(v)}</b>` : f1.format(v);
+    const vifNote = cs => { const hi = cs.filter(c => c.vif >= 10), mid = cs.filter(c => c.vif >= 5 && c.vif < 10), names = a => a.map(c => labLabel(c.var, true)).join(', ');
+      if (cs.length < 2) return '';
+      if (hi.length) return `<p class="lab-warn">${L(`Đa cộng tuyến nặng (VIF > 10): ${names(hi)}. Các biến này trùng thông tin nhau, hệ số và p-value không đáng tin; nên bỏ bớt một biến.`, `Severe multicollinearity (VIF > 10): ${names(hi)}. These regressors overlap, so their coefficients and p-values are unreliable; drop one.`)}</p>`;
+      if (mid.length) return `<p class="desc" style="color:var(--warn);margin-top:8px">${L(`Cần lưu ý (VIF 5–10): ${names(mid)}. Các biến này tương quan khá mạnh với biến khác.`, `Watch (VIF 5–10): ${names(mid)}. These regressors are fairly strongly correlated with others.`)}</p>`;
+      return `<p class="desc" style="margin-top:8px">${L(`Kiểm định VIF: mọi biến độc lập dưới 5 (cao nhất ${f1.format(Math.max(...cs.map(c => c.vif)))}), không có dấu hiệu đa cộng tuyến.`, `VIF check: every regressor is below 5 (highest ${f1.format(Math.max(...cs.map(c => c.vif)))}), no sign of multicollinearity.`)}</p>`; };
     // đọc hệ số bằng lời: biến độc lập tăng một bước thì chỉ số an toàn đổi bao nhiêu (CAR, ROA, NIM theo điểm %; trang trải theo lần)
     const ySc = sp.y === 'cov' ? 1 : 100, yU = sp.y === 'cov' ? L(' lần', '×') : L(' điểm %', ' pp');
     const xu = c => (LAB_X[c] || [])[2] || 'pp';
@@ -779,14 +782,15 @@
         (c.p < 0.1 ? '.' : L(' (chưa có ý nghĩa thống kê).', ' (not statistically significant).')); };
     el.innerHTML = `<code class="spec" style="font-size:12px">${esc(`${sp.y} ~ ${x.join(' + ')} + bank FE`)}</code>
       <div class="desc" style="margin:8px 0">n = ${r.n}, ${r.banks} ${L('ngân hàng', 'banks')}, ${r.years.join('–')} · R² within = ${f2.format(r.r2_within)}</div>
-      <div class="scroll"><table><thead><tr><th>${L('Biến', 'Variable')}</th><th>${L('Hệ số', 'Coef.')}</th><th>SE</th><th>t</th><th>p</th><th>${L('CI 95% (0 ở giữa)', '95% CI (0 centred)')}</th></tr></thead><tbody>
-        ${r.coefs.map(c => `<tr data-tip="${esc(`<b>${labLabel(c.var, true)}</b><br>CI 95% [${fc(c.lo)}; ${fc(c.hi)}]`)}"><td>${esc(labLabel(c.var, true))}</td><td>${fc(c.b)}${stars(c.p)}</td><td>${fc(c.se)}</td><td>${f2.format(c.t)}</td><td>${fp(c.p)}</td><td class="ci">${bar(c)}</td></tr>`).join('')}
+      <div class="scroll"><table><thead><tr><th>${L('Biến', 'Variable')}</th><th>${L('Hệ số', 'Coef.')}</th><th>SE</th><th>t</th><th>p</th><th data-tip="${esc(L('Hệ số phóng đại phương sai: biến này trùng thông tin với các biến độc lập còn lại đến mức nào. Dưới 5: ổn; 5–10: cần lưu ý; trên 10: đa cộng tuyến nặng, nên bỏ bớt biến.', 'Variance inflation factor: how much this regressor overlaps with the others. Below 5: fine; 5–10: watch; above 10: severe multicollinearity, drop a variable.'))}">VIF</th><th>${L('CI 95% (0 ở giữa)', '95% CI (0 centred)')}</th></tr></thead><tbody>
+        ${r.coefs.map(c => `<tr data-tip="${esc(`<b>${labLabel(c.var, true)}</b><br>CI 95% [${fc(c.lo)}; ${fc(c.hi)}]`)}"><td>${esc(labLabel(c.var, true))}</td><td>${fc(c.b)}${stars(c.p)}</td><td>${fc(c.se)}</td><td>${f2.format(c.t)}</td><td>${fp(c.p)}</td><td>${vifCell(c.vif)}</td><td class="ci">${bar(c)}</td></tr>`).join('')}
       </tbody></table></div>
+      ${vifNote(r.coefs)}
       <ul class="desc" style="margin:10px 0 0;padding-left:18px">${r.coefs.map(c => `<li>${say(c)}</li>`).join('')}</ul>
       <div style="display:flex;gap:10px;align-items:center;margin-top:14px"><span class="desc" style="white-space:nowrap">${L('Vẽ biến', 'Plot variable')}</span>
         <div class="pick" id="lab-plot">${x.map(c => `<button data-plot="${c}" aria-pressed="${c === LAB.plot}">${esc(labLabel(c, true))}</button>`).join('')}</div></div>
       <div class="chart" id="lab-chart" style="margin-top:6px"></div>
-      <p class="desc" style="margin-top:8px">${L('*** p < 0,01 · ** p < 0,05 · * p < 0,1. Chấm xanh: có ý nghĩa ở mức 5%. Khi vẽ biến vĩ mô, các chấm xếp thành cột vì mỗi năm chỉ có một giá trị. Đây là tương quan có điều kiện, không phải quan hệ nhân quả.', '*** p < 0.01 · ** p < 0.05 · * p < 0.1. Blue dot: significant at 5%. When plotting a macro variable, dots line up in columns because each year has one value. These are conditional correlations, not causal effects.')}</p>`;
+      <p class="desc" style="margin-top:8px">${L('*** p < 0,01 · ** p < 0,05 · * p < 0,1. Chấm xanh: có ý nghĩa ở mức 5%. Đây là tương quan có điều kiện, không phải quan hệ nhân quả.', '*** p < 0.01 · ** p < 0.05 · * p < 0.1. Blue dot: significant at 5%. These are conditional correlations, not causal effects.')}</p>`;
     const pc = r.coefs.find(k => k.var === LAB.plot);
     const pu = xu(LAB.plot);
     avpPlot($('lab-chart'), r.avp, { b: pc.b, sx: pu === 'pp' ? 100 : 1, sy: ySc, xl: labLabel(LAB.plot, true) + (pu === 'pp' ? L(' (điểm %)', ' (pp)') : pu === 'x' ? L(' (lần)', ' (×)') : ''), yl: labLabel(sp.y) + (sp.y === 'cov' ? L(' (lần)', ' (×)') : L(' (điểm %)', ' (pp)')), refs: [] });
