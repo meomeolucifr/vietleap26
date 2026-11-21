@@ -1,5 +1,6 @@
 """Xuất số liệu nền (tỷ VND) cho dashboard mô phỏng giảm lãi suất cho vay -> dashboard/data.js"""
-import json, os, sys, datetime
+import json, os, sys, datetime, glob, re
+import openpyxl
 sys.path.insert(0, os.path.dirname(__file__))
 import build_dataset as b
 from sample import keep, SAMPLE, YEARS
@@ -27,8 +28,41 @@ FIELDS = {
     'rwa': 127,       # Tổng tài sản có rủi ro
 }
 
+# Bảng kỳ định lại lãi suất (sheet "Rủi ro lãi suất" của FiinPro, lấy từ thuyết minh BCTC):
+# dư nợ cho vay khách hàng chia theo thời gian còn lại đến lần đổi lãi đầu tiên.
+# Dư nợ hiệu lực E = Σ dư nợ nhóm × số tháng hưởng lãi mới / 12, lấy trung điểm mỗi kỳ (như đề xuất ALCO VCB).
+REPRICE = [('Đến 1 tháng', 11.5), ('Từ 1- 3 tháng', 10), ('Từ 3 - 6 tháng', 7.5), ('Từ 6 - 12 tháng', 3)]
+REPRICE_OTHER = ['Từ 1 - 5 năm', 'Trên 5 năm', 'Quá hạn', 'Không chịu lãi']   # không hưởng lãi mới trong 12 tháng
+
+
+def load_repricing():
+    """(mã, năm) -> {nhóm kỳ định lại: dư nợ, tỷ VND}"""
+    out = {}
+    for f in sorted(glob.glob(os.path.join(b.ROOT, 'Data', '*.xlsx'))):
+        if os.path.basename(f).startswith('~$'):
+            continue
+        wb = openpyxl.load_workbook(f, read_only=True)
+        if 'Rủi ro lãi suất' not in wb.sheetnames:
+            continue
+        rows = list(wb['Rủi ro lãi suất'].iter_rows(values_only=True))
+        code = b.CODE.get(rows[7][1], rows[7][1])
+        hdr = next(r for r in rows if r and isinstance(r[0], str) and r[0].startswith('Chỉ tiêu'))
+        yrs = {i: int(v) for i, v in enumerate(hdr) if isinstance(v, str) and v.strip().isdigit()}
+        for r in rows:
+            lab = r[0] if isinstance(r[0], str) else ''
+            if not lab.strip().startswith('RRLS - Cho vay khách hàng'):
+                continue
+            bucket = re.sub(r'\s+', ' ', lab.split('(')[-1].rstrip(')').strip())
+            for i, y in yrs.items():
+                if r[i] is not None:
+                    d = out.setdefault((code, y), {})
+                    d.setdefault(bucket, r[i])   # hai file VBB trùng năm: giữ số của file đầu tiên
+    return out
+
+
 if __name__ == '__main__':
     out = b.load()
+    rp = load_repricing()
     rows = []
     for (code, year), r in sorted(out.items()):
         if not keep(code, year):
@@ -40,11 +74,19 @@ if __name__ == '__main__':
         rec['npl_amt'] = round(sum(npl_groups[2:]) / 1000, 3) if None not in npl_groups else None
         rec['npl'] = (sum(npl_groups[2:]) / sum(npl_groups)) if None not in npl_groups and sum(npl_groups) else None
         rec['car_rep'] = r[125]
+        d = rp.get((code, year), {})
+        tot = sum(d.values())
+        if d and rec['loans']:
+            rec['rp'] = [round(d.get(k, 0), 3) for k, _ in REPRICE]          # 4 nhóm đổi lãi trong 12 tháng
+            rec['rp_other'] = round(sum(d.get(k, 0) for k in REPRICE_OTHER), 3)
+            # dùng được khi tổng các nhóm khớp dư nợ gộp trên BCĐKT trong ±10%
+            rec['rp_ok'] = abs(tot / rec['loans'] - 1) < 0.10
         rows.append(rec)
     meta = {
         'source': 'FiinPro-X, Báo cáo tài chính hợp nhất năm (BCĐKT, KQKD, Thuyết minh, Báo cáo an toàn vốn), trích xuất 13/10/2026',
         'source_en': 'FiinPro-X, consolidated annual financial statements (balance sheet, income statement, notes, capital adequacy report), extracted 13/10/2026',
         'unit': 'tỷ VND',
+        'reprice_months': [m for _, m in REPRICE],
         'sample': {'banks': len(SAMPLE), 'years': [YEARS[0], YEARS[-1]],
                    'rule': 'Ngân hàng thương mại niêm yết/đăng ký giao dịch (HOSE, HNX, UPCoM), đủ báo cáo tài chính 2016–2025',
                    'rule_en': 'Commercial banks listed or traded on HOSE, HNX or UPCoM with full 2016–2025 financial statements'},

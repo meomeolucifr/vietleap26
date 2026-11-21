@@ -298,11 +298,17 @@
       </div>
       <div class="assump">
         <div class="field"><label for="alpha" data-th="alpha"></label><div class="in"><input id="alpha" type="number" min="0" max="100" value="100"><span class="u">%</span></div></div>
-        <div class="field"><label for="months" data-th="months"></label><div class="in"><input id="months" type="number" min="0" max="12" step="0.5" value="12"><span class="u" data-t="monthsU"></span></div></div>
+        <div class="field"><label for="months" data-th="months"></label><div class="in"><input id="months" type="number" min="0" max="12" step="0.1" value="12"><span class="u" data-t="monthsU"></span></div>
+          <div class="presets" id="timing-presets"></div><div class="u" id="timing-note" style="margin-top:4px"></div></div>
         <div class="field hl"><label for="phi" data-th="phi"></label><div class="in"><input id="phi" type="number" min="0" max="100" value="40"><span class="u">%</span></div>
           <div class="presets" id="phi-presets"></div></div>
       </div>
-      <div class="macro-row" id="macro-row" hidden>
+      <div class="macro-row" id="q-row">
+        <span class="lbl" data-th="q"></span>
+        <div class="seg" role="group" id="q-seg"></div>
+        <span class="hint" data-t="qHint"></span>
+      </div>
+      <div class="macro-row" id="macro-row" hidden style="border-top:0;padding-top:0;margin-top:10px">
         <span class="lbl" data-th="macro"></span>
         <div class="seg" role="group" id="macro-seg"></div>
         <span class="hint" id="macro-hint"></span>
@@ -435,6 +441,7 @@
   const coefOf = (m, v) => m ? (m.coefs.find(c => c.var === v) || {}).b : null;
   const PHI_DATA = PASS_BANK ? Math.round(coefOf(PASS_BANK, 'd_yield') * 100) / 100 : 0;
   S.phi = PHI_DATA;
+  S.timing = 'reprice';   // 'reprice' = theo bảng kỳ định lại trong BCTC; 'manual' = số tháng nhập tay
 
   // ---------- định dạng ----------
   const nf = (d, o = {}) => new Intl.NumberFormat(S.lang === 'en' ? 'en-US' : 'vi-VN', { minimumFractionDigits: d, maximumFractionDigits: d, ...o });
@@ -468,7 +475,8 @@
     labTitle: ['Tự chạy hồi quy', 'Run your own regression'],
     labDesc: ['Chọn một mô hình có sẵn hoặc tự chọn biến; kết quả tính lại ngay trên trình duyệt với dữ liệu {n} ngân hàng × 10 năm. Cách tính giống hệt mã Python của nhóm (linearmodels), đã đối chiếu khớp đến 8 chữ số với cả 6 mô hình đề xuất.',
               'Pick a ready-made model or choose your own variables; results are re-estimated in the browser on {n} banks × 10 years. The method is identical to the team\'s Python code (linearmodels) and matches all 6 proposed models to 8 digits.'],
-    miniBp: ['Mức giảm', 'Rate cut'], miniPhi: ['Chi phí vốn bù', 'Funding offset'],
+    miniBp: ['Mức giảm', 'Rate cut'],
+    qHint: ['Do ban lãnh đạo chọn, không phải quy định. Đề xuất ALCO dùng 90%.', 'Set by management, not by regulation. The ALCO proposal uses 90%.'], miniPhi: ['Chi phí vốn bù', 'Funding offset'],
     bank: ['Ngân hàng', 'Bank'], year: ['Năm nền', 'Base year'],
     bpHint: ['Mức giảm lãi suất cho vay, tính bằng điểm cơ bản: 10 bp = 0,1 điểm %', 'Lending-rate cut in basis points: 10 bp = 0.1 percentage point'],
     monthsU: ['tháng', 'months'],
@@ -487,8 +495,8 @@
     car: ['Tỷ lệ an toàn vốn (CAR)', 'Capital adequacy ratio (CAR)', 'Vốn tự có / tài sản có rủi ro (RWA). Tối thiểu 8% theo Thông tư 41/2016/TT-NHNN (chuẩn Basel II).',
           'Regulatory capital / risk-weighted assets (RWA). Minimum 8% under SBV Circular 41/2016 (Basel II).'],
     alpha: ['Dư nợ được giảm lãi', 'Loans repriced', 'Tỷ lệ dư nợ cho vay khách hàng được áp mức lãi mới.', 'Share of customer loans that get the lower rate.'],
-    months: ['Số tháng hiệu lực bình quân', 'Average months in effect', 'Trung bình bao nhiêu tháng trong 12 tháng tới khoản vay hưởng lãi mới. 12 = áp ngay cho toàn bộ (cận trên); khoản vay lãi cố định chỉ đổi khi đến kỳ định lại.',
-             'Average months of the next 12 in which loans carry the new rate. 12 = all loans repriced at once (upper bound); fixed-rate loans change only at repricing.'],
+    months: ['Thời điểm đổi lãi', 'When loans reprice', 'Số tháng bình quân trong 12 tháng tới mà khoản vay hưởng lãi mới. Mặc định tính từ bảng kỳ định lại lãi suất trong thuyết minh BCTC: dư nợ đổi lãi dưới 1 tháng hưởng 11,5 tháng, 1–3 tháng hưởng 10, 3–6 tháng hưởng 7,5, 6–12 tháng hưởng 3, trên 1 năm không hưởng (lấy trung điểm mỗi kỳ, như đề xuất ALCO). Chọn "12 tháng" để xem cận trên khi toàn bộ dư nợ đổi lãi ngay.',
+             'Average months of the next 12 in which loans carry the new rate. By default computed from the repricing table in the notes to the statements: loans repricing within 1 month get 11.5 months, 1–3 months get 10, 3–6 months get 7.5, 6–12 months get 3, over 1 year get none (bucket midpoints, as in the ALCO proposal). Pick "12 months" for the upper bound where all loans reprice at once.'],
     phi: ['Chi phí vốn giảm theo', 'Funding cost offset', 'Phần khoản giảm lãi được bù lại vì ngân hàng trả lãi tiền gửi thấp hơn. Mặc định lấy từ dữ liệu: khi riêng một ngân hàng đổi lãi, khoảng {phi} được bù (bảng "Mô hình đề xuất" ở tab Phương pháp). 0% = xấu nhất; gần 100% chỉ khi cả thị trường cùng giảm lãi.',
           'Share of the cut recovered because the bank pays depositors less. Default from data: when one bank moves alone, about {phi} is recovered ("Proposed model" table, Method tab). 0% = worst case; close to 100% only in a market-wide easing.'],
     tax: ['Thuế suất TNDN', 'Corporate tax rate', 'Thuế thu nhập doanh nghiệp, 20% ở Việt Nam. Cố định trong mô phỏng.', 'Corporate income tax, 20% in Vietnam. Fixed in the simulator.'],
@@ -794,8 +802,13 @@
 
   // ---------- mô hình ----------
   const scen = id => ECON.scenarios.find(x => x.id === id && x.dllp) || null;
+  const RPM = META.reprice_months || [11.5, 10, 7.5, 3];
+  const RPL = () => [L('Dưới 1 tháng', 'Under 1 month'), L('1–3 tháng', '1–3 months'), L('3–6 tháng', '3–6 months'), L('6–12 tháng', '6–12 months')];
   function sim(r, bp, p = S) {
-    const E = r.loans * p.alpha * p.months / 12;      // dư nợ hiệu lực cả năm
+    // dư nợ hiệu lực cả năm: theo bảng kỳ định lại (Σ dư nợ nhóm × tháng hưởng lãi mới / 12) nếu có và khớp dư nợ,
+    // không thì dư nợ × số tháng nhập tay / 12
+    const useRp = p.timing === 'reprice' && !!r.rp_ok;
+    const E = (useRp ? r.rp.reduce((a, v, i) => a + v * RPM[i] / 12, 0) : r.loans * p.months / 12) * p.alpha;
     const save = E * bp / 1e4;                         // người vay tiết kiệm = thu nhập lãi giảm (gộp)
     const dep = save * p.phi;                          // phần chi phí vốn giảm bù lại (người gửi tiền gánh)
     const dPBT = save - dep;                           // LNTT giảm
@@ -807,7 +820,7 @@
     const cap = capitalBase(r);
     const car1 = cap ? cap.car0 - (dPAT + dProvAT) * p.k / cap.rwa : null;
     const unit = E * (1 - p.phi) * (1 - p.tax) / 1e4;  // LNST mất cho mỗi bp
-    return { E, save, dep, dPBT, tax, dPAT, dProv, dProvAT, prov1, pat1, ppop1, nii1, cap, car1,
+    return { E, useRp, save, dep, dPBT, tax, dPAT, dProv, dProvAT, prov1, pat1, ppop1, nii1, cap, car1,
       dCarBp: cap ? (car1 - cap.car0) * 1e4 : null,
       patChg: r.pat > 0 ? (pat1 - r.pat) / r.pat : null, retain: r.pat > 0 ? pat1 / r.pat : null,
       cov0: r.prov > 0 ? r.ppop / r.prov : null, cov1: prov1 > 0 ? ppop1 / prov1 : null, buffer: ppop1 - prov1,
@@ -877,8 +890,13 @@
       <div class="k-sub">${L(`${f2.format(s.perBillion)} triệu đồng/năm cho mỗi 1 tỷ đồng dư nợ được giảm lãi`, `VND ${f2.format(s.perBillion)} million a year for every VND 1 bn of loans repriced`)}</div>
       <div class="k-sub" style="margin-top:10px">${L(`Tương đương <b style="color:#fff">${pct(s.save / r.ii)}</b> thu nhập lãi năm ${r.year} của ${r.bank}`,
                                                      `Equal to <b style="color:#fff">${pct(s.save / r.ii)}</b> of ${r.bank}'s ${r.year} interest income`)}</div>
-      <div class="k-foot">${fx(L(`<b>Tiết kiệm = Dư nợ hiệu lực × s</b><br>Dư nợ hiệu lực = ${ty(r.loans)} × ${f0.format(S.alpha * 100)}% × ${f1.format(S.months)}/12 = ${ty(s.E)} tỷ<br>× ${f2.format(S.bp / 100)}% = <b>${ty(s.save)} tỷ</b>`,
-                                 `<b>Savings = effective loans × s</b><br>Effective loans = ${ty(r.loans)} × ${f0.format(S.alpha * 100)}% × ${f1.format(S.months)}/12 = ${ty(s.E)} bn<br>× ${f2.format(S.bp / 100)}% = <b>${ty(s.save)} bn</b>`))}</div>`;
+      <div class="k-foot">${fx(s.useRp
+        ? L(`<b>Tiết kiệm = Dư nợ hiệu lực × s</b><br>Dư nợ hiệu lực theo bảng kỳ định lại lãi (thuyết minh BCTC ${r.year}):<br>`, `<b>Savings = effective loans × s</b><br>Effective loans from the repricing table (notes to ${r.year} statements):<br>`) +
+          RPL().map((n, i) => `${n}: ${ty(r.rp[i])} × ${f1.format(RPM[i])}/12`).join('<br>') +
+          L(`<br>Trên 1 năm, quá hạn: ${ty(r.rp_other)} × 0`, `<br>Over 1 year, overdue: ${ty(r.rp_other)} × 0`) +
+          `<br>${S.alpha < 1 ? `× ${f0.format(S.alpha * 100)}% ` : ''}= <b>${ty(s.E)} ${BN()}</b> (${pct(s.E / r.loans, 0)} ${L('dư nợ', 'of loans')})<br>× ${f2.format(S.bp / 100)}% = <b>${ty(s.save)} ${BN()}</b>`
+        : L(`<b>Tiết kiệm = Dư nợ hiệu lực × s</b><br>Dư nợ hiệu lực = ${ty(r.loans)} × ${f0.format(S.alpha * 100)}% × ${f1.format(S.months)}/12 = ${ty(s.E)} tỷ<br>× ${f2.format(S.bp / 100)}% = <b>${ty(s.save)} tỷ</b>`,
+            `<b>Savings = effective loans × s</b><br>Effective loans = ${ty(r.loans)} × ${f0.format(S.alpha * 100)}% × ${f1.format(S.months)}/12 = ${ty(s.E)} bn<br>× ${f2.format(S.bp / 100)}% = <b>${ty(s.save)} bn</b>`))}</div>`;
 
     const q = f0.format(S.q * 100);
     const patB = s.retain == null ? badge('na', '–', L('LNST nền ≤ 0', 'Base PAT ≤ 0')) : s.retain >= S.q ? badge('good', '✓', L(`Đạt mục tiêu ${q}%`, `Meets ${q}% target`)) : badge('crit', '!', L(`Dưới mục tiêu ${q}%`, `Below ${q}% target`));
@@ -1165,6 +1183,10 @@
   // các phép kiểm tra chất lượng dữ liệu cho một ngân hàng-năm; dùng chung cho chế độ một năm và tất cả các năm
   function flagsFor(r, s) {
     const F = [], add = (good, t) => F.push({ good, t });
+    if (r.rp) { const gap = (r.rp.reduce((a, v) => a + v, 0) + r.rp_other) / r.loans - 1;
+      add(r.rp_ok, r.rp_ok ? L(`Bảng kỳ định lại lãi: tổng các nhóm khớp dư nợ (lệch ${pct(Math.abs(gap), 1)})`, `Repricing table: buckets match loans (gap ${pct(Math.abs(gap), 1)})`)
+                           : L(`Bảng kỳ định lại lãi lệch dư nợ ${pct(Math.abs(gap), 0)}: dùng số tháng nhập tay`, `Repricing table differs from loans by ${pct(Math.abs(gap), 0)}: using manual months`)); }
+    else add(false, L('Không có bảng kỳ định lại lãi năm này: dùng số tháng nhập tay', 'No repricing table this year: using manual months'));
     const g1 = Math.abs(r.ppop - r.prov - r.pbt); add(g1 < 1, L(`LN trước DP − Chi phí DP = LNTT (lệch ${f2.format(g1)} tỷ)`, `Pre-provision profit − provisions = PBT (gap ${f2.format(g1)} bn)`));
     const g2 = Math.abs(r.pbt - r.tax - r.pat); add(g2 < 1, L(`LNTT − Thuế = LNST (lệch ${f2.format(g2)} tỷ)`, `PBT − tax = PAT (gap ${f2.format(g2)} bn)`));
     if (r.pbt > 0) { const e = r.tax / r.pbt; add(Math.abs(e - S.tax) < 0.03, L(`Thuế suất hiệu dụng năm nền ${pct(e)}, giả định ${pct(S.tax)}`, `Effective tax rate ${pct(e)}, assumed ${pct(S.tax)}`)); }
@@ -1184,7 +1206,7 @@
   }
   function drawFormulas() {
     $('formulas').innerHTML = [
-      [L('Dư nợ hiệu lực', 'Effective loans'), L('E = Dư nợ cho vay × α × (số tháng / 12)', 'E = loans × α × (months / 12)')], [L('Người vay tiết kiệm', 'Borrower savings'), L('T = E × s / 10.000', 'T = E × s / 10,000')],
+      [L('Dư nợ hiệu lực', 'Effective loans'), L('E = α × Σ dư nợ nhóm kỳ định lại × tháng hưởng lãi mới / 12 (11,5; 10; 7,5; 3; trên 1 năm: 0). Nếu thiếu bảng: E = dư nợ × α × số tháng / 12', 'E = α × Σ loans in each repricing bucket × months at the new rate / 12 (11.5, 10, 7.5, 3; over 1 year: 0). Without the table: E = loans × α × months / 12')], [L('Người vay tiết kiệm', 'Borrower savings'), L('T = E × s / 10.000', 'T = E × s / 10,000')],
       [L('Người gửi tiền gánh', 'Borne by depositors'), L('φ × T (φ = bù chi phí vốn)', 'φ × T (φ = funding cost offset)')], [L('LNTT giảm', 'Fall in PBT'), 'T × (1 − φ)'], [L('Ngân sách gánh', 'Borne by the budget'), L('T × (1 − φ) × thuế suất', 'T × (1 − φ) × tax rate')],
       [L('LNST giảm', 'Fall in PAT'), L('T × (1 − φ) × (1 − thuế suất) + ΔDP vĩ mô × (1 − thuế suất)', 'T × (1 − φ) × (1 − tax) + macro Δprovisions × (1 − tax)')],
       [L('ΔDP vĩ mô', 'Macro Δprovisions'), L('Δ(chi phí DP / dư nợ) theo kịch bản × dư nợ', 'scenario Δ(provisions / loans) × loans')],
@@ -1196,8 +1218,8 @@
     $('limits').innerHTML = [
       L('Kết quả là tác động tăng thêm trong 12 tháng so với năm nền, không phải dự báo LNST năm sau. Dư nợ, chi phí hoạt động và các nguồn thu khác giữ nguyên.',
         'Results are the incremental 12-month effect versus the base year, not a profit forecast. Loans, operating costs and other income are held constant.'),
-      L('Dữ liệu tổng hợp không có bảng kỳ định lại lãi, nên thời điểm đổi lãi được nhập bằng số tháng hiệu lực bình quân. Mặc định 12 tháng là cận trên; vì vậy số tiết kiệm của VCB ở 25 bp (khoảng 4.200 tỷ) cao hơn ước tính trong đề xuất ALCO (2.666 tỷ), vốn tính theo lộ trình định lại.',
-        'The data has no repricing-gap table, so timing is set by average months in effect. The 12-month default is an upper bound, which is why VCB\'s savings at 25 bp (about VND 4,200 bn) exceed the ALCO proposal\'s VND 2,666 bn, which follows the repricing schedule.'),
+      L('Thời điểm đổi lãi lấy từ bảng kỳ định lại lãi suất trong thuyết minh BCTC (sheet "Rủi ro lãi suất" của FiinPro), lấy trung điểm mỗi kỳ như đề xuất ALCO; VCB 2025 ra 2.666 tỷ ở 25 bp, khớp đề xuất. Khoản vay đổi lãi sau 1 năm không hưởng lãi mới trong cửa sổ 12 tháng. Năm thiếu bảng hoặc tổng các nhóm lệch dư nợ quá 10% thì dùng số tháng nhập tay (mặc định 12, cận trên).',
+        'Repricing timing comes from the repricing table in the notes to the statements (FiinPro "interest rate risk" sheet), using bucket midpoints as in the ALCO proposal; VCB 2025 gives VND 2,666 bn at 25 bp, matching the proposal. Loans repricing after one year get no new rate within the 12-month window. Years without the table, or where buckets differ from loans by over 10%, fall back to the manual months (default 12, an upper bound).'),
       L(`"Chi phí vốn giảm theo" mặc định ${pct(PHI_DATA, 0)}: hệ số truyền dẫn khi riêng một ngân hàng đổi lãi (hồi quy panel có hiệu ứng cố định năm). Đây là tương quan lịch sử, không phải cam kết; 0% là kịch bản xấu nhất.`,
         `"Funding cost offset" defaults to ${pct(PHI_DATA, 0)}: the pass-through when one bank moves alone (panel regression with year fixed effects). A historical correlation, not a guarantee; 0% is the worst case.`),
       L('Tác động là tuyến tính theo mức giảm: mỗi bp làm mất cùng một khoản lợi nhuận. Thực tế có thể cong, vì phần bù chi phí vốn có thể đổi theo mức giảm và lãi thấp hơn giúp người vay trả nợ tốt hơn; dữ liệu năm không đủ để ước lượng độ cong này. Dải mờ trên biểu đồ thể hiện độ bất định của phần bù chi phí vốn.',
@@ -1419,6 +1441,13 @@
     if (document.activeElement !== $('phi2')) $('phi2').value = Math.round(S.phi * 1000) / 10;
     syncMini();
     ['alpha', 'phi'].forEach(id => { if (document.activeElement !== $(id)) $(id).value = Math.round(S[id] * 1000) / 10; });
+    // ô số tháng: theo bảng kỳ định lại thì hiện số tháng tương đương (E / dư nợ × 12)
+    const rpOn = S.timing === 'reprice' && r && r.rp_ok;
+    if (document.activeElement !== $('months')) $('months').value = rpOn && S.alpha > 0 ? Math.round(sim(r, 0).E / (r.loans * S.alpha) * 120) / 10 : S.months;
+    $('timing-presets').innerHTML = `<button data-timing="reprice" aria-pressed="${S.timing === 'reprice'}" data-tip="${esc(L('Tính từ bảng kỳ định lại lãi suất trong thuyết minh BCTC', 'From the repricing table in the notes to the statements'))}">${L('Theo BCTC', 'From statements')}</button>` +
+      `<button data-timing="12" aria-pressed="${S.timing === 'manual' && S.months === 12}" data-tip="${esc(L('Toàn bộ dư nợ đổi lãi ngay: cận trên của tác động', 'All loans reprice at once: upper bound'))}">${L('12 tháng (cận trên)', '12 months (upper bound)')}</button>`;
+    $('timing-note').textContent = S.timing === 'reprice' && r && !r.rp_ok ? L('Năm này thiếu bảng kỳ định lại, đang dùng số tháng nhập tay', 'No repricing table this year; using manual months') : '';
+    $('q-seg').innerHTML = [0.85, 0.9, 0.95].map(q => `<button data-q="${q}" aria-pressed="${Math.abs(S.q - q) < 1e-9}">${f0.format(q * 100)}%</button>`).join('');
     $('bp-pct').textContent = '= ' + f2.format(S.bp / 100) + L(' điểm %', ' pp');
     document.querySelectorAll('#chips .chip, #chips2 .chip').forEach(c => c.setAttribute('aria-pressed', +c.dataset.bp === S.bp));
     document.querySelectorAll('#cmp-seg button').forEach(c => c.setAttribute('aria-pressed', c.dataset.m === S.cmp));
@@ -1510,6 +1539,10 @@
   $('tbl-matrix').addEventListener('click', pickCell);
   $('tbl-matrix').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pickCell(e); } });
   document.querySelector('.tabs').addEventListener('click', e => { if (e.target.dataset.tab) { S.tab = e.target.dataset.tab; render(); scrollTo({ top: 0 }); } });
+  $('timing-presets').addEventListener('click', e => { const t = e.target.dataset.timing; if (!t) return;
+    if (t === 'reprice') S.timing = 'reprice'; else { S.timing = 'manual'; S.months = 12; } render(); });
+  $('q-seg').addEventListener('click', e => { if (e.target.dataset.q) { S.q = +e.target.dataset.q; render(); } });
+  $('months').addEventListener('input', () => { S.timing = 'manual'; });   // gõ số tháng = chuyển sang nhập tay
   [['alpha', 100], ['months', 12], ['phi', 100]].forEach(([id, hi]) =>
     $(id).addEventListener('input', e => { const v = Math.max(0, Math.min(hi, +e.target.value || 0)); S[id] = id === 'months' ? v : v / 100; render(); }));
   let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(render, 120); });

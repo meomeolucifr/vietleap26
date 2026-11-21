@@ -26,7 +26,9 @@ Kết quả chính của dashboard là **mức giảm tối đa** vẫn đạt m
 **Tầng 1, công thức kế toán.** Tác động của mức giảm s được tính trực tiếp trên báo cáo tài chính năm nền, không qua hồi quy. Lý do: ALCO cần con số cho chính ngân hàng mình và truy được về từng dòng báo cáo.
 
 ```
-E    = Dư nợ cho vay × α × (số tháng hiệu lực / 12)        dư nợ chịu lãi mới trong 12 tháng
+E    = α × Σ (dư nợ nhóm kỳ định lại i × mᵢ / 12)            dư nợ chịu lãi mới, quy đổi theo thời gian trong 12 tháng
+       mᵢ = 11,5 / 10 / 7,5 / 3 tháng cho nhóm <1 / 1–3 / 3–6 / 6–12 tháng; trên 1 năm, quá hạn: 0
+       (thiếu bảng kỳ định lại: E = dư nợ × α × số tháng / 12)
 T    = E × s / 10.000                                       người vay tiết kiệm = thu nhập lãi mất
 ΔLNTT = T × (1 − φ) + ΔDP                                   φ: phần bù từ trả lãi tiền gửi thấp hơn
 ΔLNST = ΔLNTT × (1 − thuế)
@@ -47,7 +49,9 @@ Mức giảm tối đa = [(1 − mục tiêu) × LNST nền − ΔDP × (1 − t
 | Kinh tế xấu đi → dự phòng tăng | GDP chậm lại thì chi phí dự phòng tăng bao nhiêu? | `llp_macro`: chi phí DP/dư nợ BQ ~ GDP + CPI + tăng trưởng dư nợ + nợ xấu năm trước + quy mô + FE ngân hàng, SE Driscoll-Kraay | GDP −1 điểm % → DP **+2,2 bp** dư nợ (p < 0,001; nhưng p = 0,37 với SE cụm) | Tạo kịch bản Bất lợi (như 2019→2021, GDP −4,4 điểm %: DP +9,7 bp) và Thuận lợi (−2,0 bp) |
 | Vĩ mô → NIM | Điều kiện vĩ mô có làm đổi NIM? | `nim_macro`: NIM ~ LS huy động + GDP + CPI + tăng trưởng dư nợ + nợ xấu + quy mô + FE ngân hàng, SE Driscoll-Kraay | Không hệ số vĩ mô nào có ý nghĩa ở 5% | Không thêm kênh này; tránh tính trùng với kênh giảm lãi |
 
-Ví dụ VCB, năm nền 2025, giảm 25 bp, φ = 39%, kịch bản Cơ sở: người vay tiết kiệm khoảng 4.184 tỷ đồng, LNST giảm khoảng 5,8%, CAR 11,56% → 11,46%, trang trải dự phòng 14,8 → 14,0 lần. Xem số chính xác trên dashboard.
+Ví dụ VCB, năm nền 2025, giảm 25 bp, φ = 39%, kịch bản Cơ sở: E = 1.066.318 tỷ (64% dư nợ), người vay tiết kiệm 2.666 tỷ đồng, LNST giảm 3,7%, CAR 11,56% → 11,49%, trang trải dự phòng 14,8 → 14,3 lần; giảm tối đa 67 bp (55–86 bp theo khoảng tin cậy của φ) mà vẫn giữ 90% LNST, còn 42 bp trong kịch bản Bất lợi. Đặt φ = 0 như đề xuất ALCO thì ra 41 bp, LNST −6,1% ở 25 bp và −12,1% ở 50 bp, khớp đề xuất.
+
+**Nguồn của E.** Bảng kỳ định lại lãi suất trong thuyết minh BCTC (sheet "Rủi ro lãi suất" của FiinPro-X) chia dư nợ cho vay khách hàng theo thời gian đến lần đổi lãi đầu tiên. Đây là mô hình chênh lệch kỳ định lại (repricing gap) dùng trong quản trị rủi ro lãi suất: chỉ phần dư nợ đổi lãi trong 12 tháng mới chịu lãi mới, và chỉ trong số tháng còn lại. 231/250 ngân hàng-năm có bảng với tổng các nhóm khớp dư nợ trong ±10%; 19 trường hợp còn lại dùng số tháng nhập tay (mặc định 12, cận trên) và có cảnh báo trên dashboard.
 
 Trên dashboard (tab Phương pháp), bốn mô hình chính, mỗi mô hình gắn với một chỉ số an toàn (`pass_bank`, `roa_det`, `car_resp`, `llp_macro`), được vẽ thành biểu đồ added-variable. Mỗi chấm là một ngân hàng-năm sau khi đã loại hiệu ứng cố định và các biến kiểm soát; độ dốc đường hồi quy bằng đúng hệ số, kèm đường giả định mà mô phỏng đang dùng. Người xem có thể bật/tắt hiệu ứng năm, đổi mức bỏ đuôi và cách tính sai số; hồi quy chạy lại ngay trên trình duyệt (`dashboard/regress.js`, khớp linearmodels đến khoảng 1e-8, kiểm tra bằng `node scripts/test_regress.js`). Phần "Tự chạy hồi quy" cho chọn biến tuỳ ý.
 
@@ -61,8 +65,8 @@ Trên dashboard (tab Phương pháp), bốn mô hình chính, mỗi mô hình g�
 ### Hạn chế
 
 - Kết quả là tác động tăng thêm trong 12 tháng so với năm nền, không phải dự báo.
-- Tác động là tuyến tính theo mức giảm (VCB 2025: mỗi 10 bp mất khoảng 2,3% LNST). Thực tế có thể cong: phần bù chi phí vốn có thể đổi theo mức giảm, lãi thấp hơn giúp người vay trả nợ tốt hơn và dự phòng giảm. Dữ liệu năm không đủ để ước lượng độ cong; dashboard thay vào đó vẽ dải bất định theo khoảng tin cậy 95% của φ (26–52%), cho VCB 2025 mức giảm tối đa trong khoảng 35–55 bp.
-- Thiếu bảng kỳ định lại lãi suất, nên thời điểm áp lãi mới là giả định (mặc định 12 tháng, cận trên). Vì vậy số tiết kiệm của VCB ở 25 bp (khoảng 4.200 tỷ) cao hơn ước tính 2.666 tỷ của đề xuất ALCO.
+- Tác động là tuyến tính theo mức giảm (VCB 2025: mỗi 10 bp mất khoảng 1,5% LNST). Thực tế có thể cong: phần bù chi phí vốn có thể đổi theo mức giảm, lãi thấp hơn giúp người vay trả nợ tốt hơn và dự phòng giảm. Dữ liệu năm không đủ để ước lượng độ cong; dashboard thay vào đó vẽ dải bất định theo khoảng tin cậy 95% của φ (26–52%), cho VCB 2025 mức giảm tối đa trong khoảng 55–86 bp.
+- Trong mỗi nhóm kỳ định lại, thời điểm đổi lãi lấy trung điểm (như đề xuất ALCO); khoản vay lãi cố định đến hạn giả định tái tục ở lãi mới. Năm thiếu bảng thì dùng số tháng nhập tay. Mục tiêu giữ 90% LNST là lựa chọn của ban lãnh đạo, không phải quy định; dashboard cho chọn 85/90/95%.
 - Các hệ số là tương quan có điều kiện, không phải nhân quả. φ là quan hệ lịch sử, không phải cam kết của người gửi tiền.
 - Hệ số GDP trong `llp_macro` nhạy với cách tính sai số; giai đoạn 2020–2021 có chính sách cơ cấu nợ (Thông tư 01/2020) có thể làm dự phòng phản ứng chậm.
 
