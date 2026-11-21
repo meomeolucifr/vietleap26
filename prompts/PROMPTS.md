@@ -80,15 +80,15 @@ Write a simulation function for one bank-year, on the base-year statements, for 
 - Effective loans E = α × Σ loans in repricing band × months at the new rate / 12, with 11.5 / 10 / 7.5 / 3 months
   for bands under 1 / 1–3 / 3–6 / 6–12 months, and 0 for over one year and overdue. Without the table,
   E = loans × α × months / 12 (default 12, an upper bound).
-- Borrower savings T = E × s / 10,000; depositors bear φ × T; profit before tax falls by T(1 − φ); tax 20%;
-  shareholders bear the rest.
+- Borrower savings T = E × s / 10,000; funding cost held unchanged (worst case, as in the ALCO proposal), so profit
+  before tax falls by T; tax 20%; shareholders bear the rest.
 - New CAR = base CAR − fall in profit after tax × k / RWA (k = 100%, RWA unchanged). If capital/RWA differs from
   reported CAR by more than 0.3 pp, use reported CAR and imply RWA, labelled as estimated.
 - Provision coverage = (pre-provision profit − fall in profit before tax) / provision expense.
 - Closed-form maximum cut that keeps q% of profit after tax, and the break-even cut.
 - Macro scenario: add Δ(provisions / loans) × loans to provision expense, kept separate from the rate-cut channel.
-Handle loss-making banks and missing capital data. Check: with φ = 0, Vietcombank 2025 must give 41 bp and
-profit −6.1% at 25 bp.
+Handle loss-making banks and missing capital data. Check: Vietcombank 2025 must give 41 bp and
+profit −6.1% at 25 bp, as in the ALCO proposal.
 ```
 
 ---
@@ -100,7 +100,7 @@ Write scripts/econometrics.py using linearmodels PanelOLS on 25 banks × 2016–
 Declare the models in a MODELS list (id, VI/EN title, y, x, bank FE, year FE, SE type, takeaway generated from
 the coefficients):
 1. pass_mkt: Δ funding cost ~ Δ asset yield, bank FE, clustered SE.
-2. pass_bank: the same with year FE (a single bank's own response) → the simulator's default φ.
+2. pass_bank: the same with year FE (a single bank's own response); reported only, not used by the simulator.
 3. roa_det: ROA ~ NIM + CIR + NPL + equity/assets + size + loans/assets, two-way FE (compare with 0.8).
 4. car_resp: ΔCAR (capital/RWA) ~ ROA + loan growth, two-way FE (compare with 1 / (RWA / total assets)).
 5. loan_resp: loan growth ~ Δ asset yield, two-way FE.
@@ -130,15 +130,14 @@ pickers (with an "All years" option).
 
 Simulator tab:
 - Control panel: large bp input + slider + 0/10/25/50/100 buttons; share of loans repriced; repricing timing with
-  "From statements" / "12 months (upper bound)" buttons; funding-cost offset with "Data (φ from pass_bank)" /
-  "Worst 0%" buttons; profit target 85/90/95% with the note "set by management"; macro scenario buttons. When the
+  "From statements" / "12 months (upper bound)" buttons; profit target 85/90/95% with the note "set by management"; macro scenario buttons. When the
   panel scrolls out of view, show a compact sticky control bar at the top, synced both ways.
 - Four KPI cards: borrower savings (highlighted card), profit after tax (meter against the target), provision
   coverage, CAR (0–20% gauge with an 8% mark). Each has a status badge and a "How it's computed" button showing the
   formula with real numbers (the savings card shows the repricing table).
 - Chart "How far can rates be cut before missing the profit target?": % of profit kept by bp, green zone meeting the
-  target, target line, shaded band from the 95% CI of φ, dashed lines for the other two macro scenarios; the
-  description states the cost per 10 bp and the range of the maximum cut; hover to read each level, click to select.
+  target, target line, dashed lines for the other two macro scenarios; the description states the cost per
+  10 bp; hover to read each level, click to select.
 - 25-bank comparison (Δ profit / max cut / coverage / CAR after): horizontal bars, threshold lines per metric
   (10% loss, the bp under review, 1× and 2×, 8%), a median line, failing bars in red and thin ones in amber;
   a takeaway "x of 25 banks…" comparing the selected bank with the median and giving the ROA reason; banks with
@@ -199,6 +198,6 @@ proposal), record of AI use, division of work, version history.
 ```
 Write an English pitch script of about 6 minutes for the judges (international academics, FiinGroup) and students.
 Follow five questions: why banks cut rates, who pays, what "safe" means and why 90%, why the numbers can be trusted
-(a coffee-shop example for φ 36% vs 98%), and how much to cut. Include a three-step demo, slide titles that are
+(the base-year statements and the match with the ALCO proposal), and how much to cut. Include a three-step demo, slide titles that are
 conclusions, a Q&A bank with one-sentence answers, and a Vietnamese summary.
 ```

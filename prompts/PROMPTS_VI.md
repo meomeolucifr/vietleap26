@@ -74,13 +74,14 @@ Viết hàm mô phỏng cho một ngân hàng-năm, tính trên BCTC năm nền 
 - Dư nợ hiệu lực E = α × Σ dư nợ nhóm kỳ định lại × tháng hưởng lãi mới / 12, với 11,5 / 10 / 7,5 / 3 tháng cho
   nhóm dưới 1 / 1–3 / 3–6 / 6–12 tháng, trên 1 năm và quá hạn = 0. Thiếu bảng thì E = dư nợ × α × số tháng / 12
   (mặc định 12, cận trên).
-- Người vay tiết kiệm T = E × s / 10.000; người gửi tiền gánh φ × T; LNTT giảm T(1 − φ); thuế 20%; LNST giảm phần còn lại.
+- Người vay tiết kiệm T = E × s / 10.000; chi phí vốn giữ nguyên (trường hợp xấu nhất, như đề xuất ALCO) nên LNTT giảm T;
+  thuế 20%; LNST giảm phần còn lại.
 - CAR mới = CAR nền − LNST giảm × k / RWA (k = 100%, RWA giữ nguyên). Nếu VTC/RWA lệch CAR công bố > 0,3 điểm %
   thì dùng CAR công bố và suy ra RWA, gắn nhãn ước tính.
 - Trang trải dự phòng = (LN trước dự phòng − LNTT giảm) / chi phí dự phòng.
 - Mức giảm tối đa giữ q% LNST và điểm hoà vốn tính bằng công thức đóng.
 - Kịch bản vĩ mô: cộng Δ(chi phí dự phòng/dư nợ) × dư nợ vào chi phí dự phòng, tách riêng khỏi kênh giảm lãi.
-Xử lý ngân hàng lỗ, thiếu dữ liệu vốn. Đối chiếu: đặt φ = 0 thì VCB 2025 phải ra 41 bp, LNST −6,1% ở 25 bp.
+Xử lý ngân hàng lỗ, thiếu dữ liệu vốn. Đối chiếu: VCB 2025 phải ra 41 bp, LNST −6,1% ở 25 bp, như đề xuất ALCO.
 ```
 
 ---
@@ -92,7 +93,7 @@ Viết scripts/econometrics.py dùng linearmodels PanelOLS trên 25 ngân hàng 
 Khai báo mô hình trong danh sách MODELS (id, tiêu đề VI/EN, y, x, FE ngân hàng, FE năm, loại SE, câu kết luận
 sinh từ hệ số):
 1. pass_mkt: Δ chi phí vốn ~ Δ lợi suất tài sản, FE ngân hàng, SE cụm.
-2. pass_bank: như trên thêm FE năm (phản ứng riêng của một ngân hàng) → dùng làm φ mặc định của mô phỏng.
+2. pass_bank: như trên thêm FE năm (phản ứng riêng của một ngân hàng); chỉ báo cáo, mô phỏng không dùng.
 3. roa_det: ROA ~ NIM + CIR + nợ xấu + VCSH/TTS + quy mô + cho vay/TTS, FE hai chiều (so với giả định 0,8).
 4. car_resp: ΔCAR (VTC/RWA) ~ ROA + tăng trưởng dư nợ, FE hai chiều (so với 1 / (RWA/TTS)).
 5. loan_resp: tăng trưởng dư nợ ~ Δ lợi suất, FE hai chiều.
@@ -119,15 +120,13 @@ mà vẫn giữ 90% lợi nhuận"); dòng phụ một câu; chọn ngân hàng 
 
 Tab Mô phỏng:
 - Khung điều chỉnh: ô số bp lớn + thanh trượt + nút 0/10/25/50/100; ô dư nợ được giảm lãi; ô thời điểm đổi lãi
-  với nút "Theo BCTC" / "12 tháng (cận trên)"; ô chi phí vốn giảm theo với nút "Dữ liệu (φ từ pass_bank)" /
-  "Xấu nhất 0%"; nút mục tiêu giữ LNST 85/90/95% kèm ghi chú "lựa chọn của ban lãnh đạo"; nút kịch bản vĩ mô.
+  với nút "Theo BCTC" / "12 tháng (cận trên)"; nút mục tiêu giữ LNST 85/90/95% kèm ghi chú "lựa chọn của ban lãnh đạo"; nút kịch bản vĩ mô.
   Khi cuộn qua khung này thì hiện thanh điều chỉnh gọn ghim đầu trang, đồng bộ hai chiều.
 - Bốn thẻ KPI: người vay tiết kiệm (thẻ nổi bật), LNST (thanh đo so mục tiêu), trang trải dự phòng, CAR (đồng hồ
   0–20% có vạch 8%). Mỗi thẻ có nhãn trạng thái và nút "Cách tính" hiện công thức với số thật (thẻ tiết kiệm hiện
   bảng kỳ định lại).
 - Biểu đồ "Giảm bao nhiêu thì còn giữ được mục tiêu lợi nhuận?": đường % LNST giữ lại theo bp, vùng xanh đạt mục
-  tiêu, vạch mục tiêu, dải mờ theo khoảng tin cậy 95% của φ, nét đứt cho hai kịch bản vĩ mô còn lại; mô tả ghi độ
-  dốc mỗi 10 bp và khoảng của mức giảm tối đa; rê chuột xem từng mức, bấm để chọn.
+  tiêu, vạch mục tiêu, nét đứt cho hai kịch bản vĩ mô còn lại; mô tả ghi độ dốc mỗi 10 bp; rê chuột xem từng mức, bấm để chọn.
 - So sánh 25 ngân hàng (Δ LNST / giảm tối đa / trang trải DP / CAR sau): thanh ngang, vạch ngưỡng theo chỉ tiêu
   (mất 10%, mức bp đang xét, 1 và 2 lần, 8%), vạch trung vị, thanh không đạt tô đỏ, mỏng tô vàng; câu kết luận
   "x/25 ngân hàng…" và so ngân hàng đang chọn với trung vị kèm lý do ROA; ngân hàng lãi quá mỏng ghi riêng.
@@ -186,6 +185,6 @@ phân công, nhật ký phiên bản.
 ```
 Viết kịch bản thuyết trình tiếng Anh khoảng 6 phút cho giám khảo (học thuật quốc tế, FiinGroup) và sinh viên.
 Đi theo 5 câu hỏi: vì sao ngân hàng giảm lãi, ai trả tiền, thế nào là an toàn và vì sao 90%, vì sao tin được con số
-(ví dụ quán cà phê cho φ 36% so với 98%), nên giảm bao nhiêu. Có demo 3 thao tác, slide tiêu đề là câu kết luận,
+(số liệu BCTC năm nền và khớp với đề xuất ALCO), nên giảm bao nhiêu. Có demo 3 thao tác, slide tiêu đề là câu kết luận,
 ngân hàng câu hỏi Q&A kèm câu trả lời một câu, tóm tắt tiếng Việt.
 ```

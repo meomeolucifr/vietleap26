@@ -373,8 +373,6 @@
           <div class="field"><label for="alpha" data-th="alpha"></label><div class="in"><input id="alpha" type="number" min="0" max="100" value="100"><span class="u">%</span></div></div>
           <div class="field"><label for="months" data-th="months"></label><div class="in"><input id="months" type="number" min="0" max="12" step="0.1" value="12"><span class="u" data-t="monthsU"></span></div>
             <div class="presets" id="timing-presets"></div><div class="u" id="timing-note" style="margin-top:4px"></div></div>
-          <div class="field hl"><label for="phi" data-th="phi"></label><div class="in"><input id="phi" type="number" min="0" max="100" value="40"><span class="u">%</span></div>
-            <div class="presets" id="phi-presets"></div></div>
         </div>
       </details>
     </section>
@@ -446,8 +444,6 @@
       <input id="bpRange2" type="range" min="0" max="300" step="1">
       <div class="chips" id="chips2"></div>
       <span class="sep"></span>
-      <span class="lbl" data-t="miniPhi"></span><input id="phi2" type="number" min="0" max="100"><span class="u">%</span>
-      <span class="sep"></span>
       <div class="seg" role="group" id="macro-seg2"></div>
     </div>
   </div>
@@ -479,11 +475,8 @@
   const L = (vi, en) => S.lang === 'en' ? en : vi;
   const LX = (o, k) => S.lang === 'en' && o[k + '_en'] != null ? o[k + '_en'] : o[k];   // trường song ngữ từ Python
 
-  // φ mặc định = hệ số truyền dẫn khi riêng một ngân hàng đổi lãi (mô hình pass_bank, có hiệu ứng năm)
-  const PASS_BANK = ECON.models.find(m => m.id === 'pass_bank'), PASS_MKT = ECON.models.find(m => m.id === 'pass_mkt');
-  const coefOf = (m, v) => m ? (m.coefs.find(c => c.var === v) || {}).b : null;
-  const PHI_DATA = PASS_BANK ? Math.round(coefOf(PASS_BANK, 'd_yield') * 100) / 100 : 0;
-  S.phi = PHI_DATA;
+  // chi phí vốn giữ nguyên (φ = 0): ngân hàng gánh toàn bộ khoản giảm lãi, trường hợp xấu nhất như đề xuất ALCO
+  S.phi = 0;
   S.timing = 'reprice';   // 'reprice' = theo bảng kỳ định lại trong BCTC; 'manual' = số tháng nhập tay
 
   // ---------- định dạng ----------
@@ -515,7 +508,7 @@
     miniBp: ['Mức giảm', 'Rate cut'],
     assumpTitle: ['Giả định', 'Assumptions'],
     memoBtn: ['Tóm tắt cho ALCO', 'Summary for ALCO'],
-    qHint: ['Do ban lãnh đạo chọn, không phải quy định. Đề xuất ALCO dùng 90%.', 'Set by management, not by regulation. The ALCO proposal uses 90%.'], miniPhi: ['Chi phí vốn bù', 'Funding offset'],
+    qHint: ['Do ban lãnh đạo chọn, không phải quy định. Đề xuất ALCO dùng 90%.', 'Set by management, not by regulation. The ALCO proposal uses 90%.'],
     bank: ['Ngân hàng', 'Bank'], year: ['Năm nền', 'Base year'],
     bpHint: ['Mức giảm lãi suất cho vay, tính bằng điểm cơ bản: 10 bp = 0,1 điểm %', 'Lending-rate cut in basis points: 10 bp = 0.1 percentage point'],
     monthsU: ['tháng', 'months'],
@@ -535,8 +528,6 @@
     alpha: ['Dư nợ được giảm lãi', 'Loans repriced', 'Tỷ lệ dư nợ cho vay khách hàng được áp mức lãi mới.', 'Share of customer loans that get the lower rate.'],
     months: ['Thời điểm đổi lãi', 'When loans reprice', 'Số tháng bình quân trong 12 tháng tới mà khoản vay hưởng lãi mới. Mặc định tính từ bảng kỳ định lại lãi suất trong thuyết minh BCTC: dư nợ đổi lãi dưới 1 tháng hưởng 11,5 tháng, 1–3 tháng hưởng 10, 3–6 tháng hưởng 7,5, 6–12 tháng hưởng 3, trên 1 năm không hưởng (lấy trung điểm mỗi kỳ, như đề xuất ALCO). Chọn "12 tháng" để xem cận trên khi toàn bộ dư nợ đổi lãi ngay.',
              'Average months of the next 12 in which loans carry the new rate. By default computed from the repricing table in the notes to the statements: loans repricing within 1 month get 11.5 months, 1–3 months get 10, 3–6 months get 7.5, 6–12 months get 3, over 1 year get none (bucket midpoints, as in the ALCO proposal). Pick "12 months" for the upper bound where all loans reprice at once.'],
-    phi: ['Chi phí vốn giảm theo', 'Funding cost offset', 'Phần khoản giảm lãi được bù lại vì ngân hàng trả lãi tiền gửi thấp hơn. Mặc định lấy từ dữ liệu: khi riêng một ngân hàng đổi lãi, khoảng {phi} được bù (bảng "Mô hình đề xuất" ở tab Phương pháp). 0% = xấu nhất; gần 100% chỉ khi cả thị trường cùng giảm lãi.',
-          'Share of the cut recovered because the bank pays depositors less. Default from data: when one bank moves alone, about {phi} is recovered ("Proposed model" table, Method tab). 0% = worst case; close to 100% only in a market-wide easing.'],
     tax: ['Thuế suất TNDN', 'Corporate tax rate', 'Thuế thu nhập doanh nghiệp, 20% ở Việt Nam. Cố định trong mô phỏng.', 'Corporate income tax, 20% in Vietnam. Fixed in the simulator.'],
     k: ['LNST giữ lại vào vốn', 'Profit retained in capital', 'Phần lợi nhuận không chia cổ tức, được cộng vào vốn tự có để tính CAR. Cố định 100% (thận trọng: toàn bộ phần LNST giảm làm giảm vốn).', 'Share of profit not paid out, added to regulatory capital for CAR. Fixed at 100% (conservative: the whole profit loss reduces capital).'],
     q: ['Mục tiêu giữ LNST', 'Profit retention target', 'Tỷ lệ LNST năm nền ngân hàng muốn giữ lại sau khi giảm lãi (đề xuất ALCO: 90%). Do ban lãnh đạo chọn, không phải quy định.', 'Share of base-year profit the bank wants to keep after the cut (ALCO proposal: 90%). Set by management, not by regulation.'],
@@ -545,7 +536,7 @@
     ppop: ['LN trước dự phòng', 'Pre-provision profit', 'Lợi nhuận thuần từ hoạt động kinh doanh trước chi phí dự phòng rủi ro tín dụng.', 'Operating profit before credit-loss provisions.'],
     bn: ['tỷ đồng', 'VND bn', '1 tỷ đồng = 1 tỷ (10⁹) VND. Mọi số tiền trên dashboard tính bằng đơn vị này.', '1 VND bn = 1 billion (10⁹) Vietnamese dong (tỷ đồng). All money on the dashboard is in this unit.'],
   };
-  const termTip = k => TERMS[k][S.lang === 'en' ? 3 : 2].replace('{phi}', pct(PHI_DATA, 0));
+  const termTip = k => TERMS[k][S.lang === 'en' ? 3 : 2];
   const term = (k, text) => `<span class="term" tabindex="0" data-tip="${esc(termTip(k))}">${text ?? TERMS[k][S.lang === 'en' ? 1 : 0]}</span>`;
   function applyStatic() {
     document.documentElement.lang = S.lang;
@@ -561,8 +552,6 @@
     $('lang').setAttribute('aria-label', L('Chuyển sang tiếng Anh', 'Switch to Vietnamese'));
     $('cmp-seg').innerHTML = [['pat', 'Δ LNST', 'Δ PAT'], ['max', 'Giảm tối đa', 'Max cut'], ['cov', 'Trang trải DP', 'Coverage'], ['car', 'CAR sau', 'CAR after']]
       .map(([m, vi, en]) => `<button data-m="${m}" aria-pressed="${m === S.cmp}">${L(vi, en)}</button>`).join('');
-    $('phi-presets').innerHTML = `<button data-phi="${PHI_DATA}" data-tip="${esc(L('Ước lượng khi riêng một ngân hàng giảm lãi (mô hình có hiệu ứng năm)', 'Estimate when one bank cuts alone (model with year effects)'))}">${L('Dữ liệu', 'Data')} ${pct(PHI_DATA, 0)}</button>` +
-      `<button data-phi="0" data-tip="${esc(L('Không bù được gì: kịch bản xấu nhất cho ngân hàng', 'No offset: worst case for the bank'))}">${L('Xấu nhất', 'Worst')} 0%</button>`;
     drawLimits(); drawGlossary(); drawVars(); drawLab(); paintTheme();
   }
 
@@ -845,8 +834,6 @@
     const s = sim(r, S.bp), sb = sim(r, S.bp, { ...S, macro: 'bad' }), c = safeCut(r), q = f0.format(S.q * 100);
     const hasBad = ECON.scenarios.some(x => x.id === 'bad'), retain = v => v == null ? '–' : pct(v);
     const status = (v, ok) => ok ? L('đạt', 'met') : L('KHÔNG đạt', 'NOT met');
-    const ci = PASS_BANK && Math.abs(S.phi - PHI_DATA) < 1e-9 ? PASS_BANK.coefs.find(k => k.var === 'd_yield') : null;
-    const mx = ci ? [sim(r, S.bp, { ...S, phi: ci.lo }).maxBp, sim(r, S.bp, { ...S, phi: ci.hi }).maxBp] : null;
     const sec = [
       [L('Đề xuất', 'Proposal'), [
         L(`Giảm lãi suất cho vay ${f0.format(S.bp)} bp (${f2.format(S.bp / 100)} điểm %) trong 12 tháng.`, `Cut lending rates by ${f0.format(S.bp)} bp (${f2.format(S.bp / 100)} pp) for 12 months.`),
@@ -855,7 +842,7 @@
       ]],
       [L('Lợi ích và ai gánh (12 tháng)', 'Benefit and who pays (12 months)'), [
         L(`Người vay tiết kiệm ${ty(s.save)} tỷ đồng (${f2.format(s.perBillion)} triệu đồng cho mỗi 1 tỷ dư nợ được giảm lãi).`, `Borrowers save VND ${ty(s.save)} bn (VND ${f2.format(s.perBillion)} million per VND 1 bn of loans repriced).`),
-        L(`Cổ đông ${ty(s.dPAT)} tỷ · người gửi tiền ${ty(s.dep)} tỷ (chi phí vốn bù ${pct(S.phi, 0)}) · ngân sách ${ty(s.tax)} tỷ (thuế).`, `Shareholders VND ${ty(s.dPAT)} bn · depositors ${ty(s.dep)} bn (funding offset ${pct(S.phi, 0)}) · state budget ${ty(s.tax)} bn (tax).`),
+        L(`Cổ đông ${ty(s.dPAT)} tỷ (lợi nhuận giảm) · ngân sách ${ty(s.tax)} tỷ (thuế).`, `Shareholders VND ${ty(s.dPAT)} bn (lower profit) · state budget VND ${ty(s.tax)} bn (tax).`),
       ]],
       [L('Chỉ số an toàn sau khi giảm', 'Safety indicators after the cut'), [
         L(`Lợi nhuận sau thuế: ${ty(r.pat)} → ${ty(s.pat1)} tỷ, giữ ${retain(s.retain)} (mục tiêu ${q}%: ${status(0, s.retain >= S.q)})${hasBad ? `; kịch bản bất lợi giữ ${retain(sb.retain)}` : ''}.`,
@@ -866,11 +853,10 @@
       [L('Giả định chính', 'Key assumptions'), [
         s.useRp ? L(`Thời điểm đổi lãi theo bảng kỳ định lại trong BCTC ${r.year}: ${pct(s.E / r.loans, 0)} dư nợ hưởng lãi mới tính theo thời gian.`, `Repricing timing from the ${r.year} repricing table: ${pct(s.E / r.loans, 0)} of loans at the new rate, time-weighted.`)
                 : L(`Toàn bộ dư nợ đổi lãi trong ${f1.format(S.months)} tháng (cận trên).`, `All loans reprice within ${f1.format(S.months)} months (upper bound).`),
-        L(`Chi phí vốn bù ${pct(S.phi, 0)}${ci ? ' (ước lượng từ 25 ngân hàng × 10 năm khi một ngân hàng tự giảm lãi)' : ''}; thuế 20%; tài sản rủi ro không đổi.`, `Funding offset ${pct(S.phi, 0)}${ci ? ' (estimated on 25 banks × 10 years for a bank cutting alone)' : ''}; tax 20%; risk-weighted assets unchanged.`),
+        L('Chi phí vốn giữ nguyên: ngân hàng gánh toàn bộ khoản giảm lãi (trường hợp xấu nhất, như đề xuất ALCO); thuế 20%; tài sản rủi ro không đổi.', 'Funding cost unchanged: the bank bears the whole cut (worst case, as in the ALCO proposal); tax 20%; risk-weighted assets unchanged.'),
       ]],
       [L('Rủi ro cần lưu ý', 'Risks to note'), [
-        mx && ok(mx[0]) ? L(`Phần bù chi phí vốn không chắc chắn (${pct(ci.lo, 0)}–${pct(ci.hi, 0)}): mức giảm tối đa giữ ${q}% lợi nhuận dao động ${f0.format(Math.floor(mx[0]))}–${f0.format(Math.floor(mx[1]))} bp.`, `The funding offset is uncertain (${pct(ci.lo, 0)}–${pct(ci.hi, 0)}): the maximum cut keeping ${q}% of profit ranges ${f0.format(Math.floor(mx[0]))}–${f0.format(Math.floor(mx[1]))} bp.`)
-                        : L('Nếu người gửi tiền không chấp nhận lãi thấp hơn, thiệt hại lợi nhuận lớn hơn (xem mức bù 0%).', 'If depositors do not accept lower rates, the profit hit is larger (see the 0% offset).'),
+        L('Nếu ngân hàng hạ được lãi huy động, thiệt hại lợi nhuận sẽ nhỏ hơn mức tính ở đây.', 'If the bank can also lower deposit rates, the profit hit is smaller than shown here.'),
         hasBad ? L(`Nếu kinh tế xấu như giai đoạn Covid, chi phí dự phòng tăng; mức tối đa còn ${ok(sb.maxBp) ? f0.format(Math.floor(sb.maxBp)) + ' bp' : '–'}.`, `In a Covid-like downturn provisions rise; the maximum falls to ${ok(sb.maxBp) ? f0.format(Math.floor(sb.maxBp)) + ' bp' : '–'}.`) : '',
       ].filter(Boolean)],
     ];
@@ -938,8 +924,8 @@
       <div class="k-sub">${ty(r.pat)} → <b>${ty(s.pat1)}</b> ${BNL()}</div>
       ${r.pat > 0 ? `<div class="meter" role="img" aria-label="${L('Giữ', 'Keeps')} ${pct(s.retain)}, ${L('mục tiêu', 'target')} ${pct(S.q, 0)}"><span style="width:${keep * 100}%"></span><b style="left:calc(${S.q * 100}% - 1px)"></b></div>
       <div class="meter-legend"><span>${L('Giữ lại', 'Kept')} ${pct(s.retain)}</span><span>${L('Mục tiêu', 'Target')} ${pct(S.q, 0)}</span></div>` : ''}
-      <div class="k-foot">${fx(L(`<b>ΔLNST do giảm lãi = Tiết kiệm × (1 − bù chi phí vốn) × (1 − thuế)</b><br>= ${ty(s.save)} × ${f0.format((1 - S.phi) * 100)}% × ${f0.format((1 - S.tax) * 100)}% = <b>${ty(s.dPAT)} tỷ</b>`,
-                                 `<b>ΔPAT from the cut = savings × (1 − funding offset) × (1 − tax)</b><br>= ${ty(s.save)} × ${f0.format((1 - S.phi) * 100)}% × ${f0.format((1 - S.tax) * 100)}% = <b>${ty(s.dPAT)} bn</b>`) +
+      <div class="k-foot">${fx(L(`<b>ΔLNST do giảm lãi = Tiết kiệm × (1 − thuế)</b><br>= ${ty(s.save)} × ${f0.format((1 - S.tax) * 100)}% = <b>${ty(s.dPAT)} tỷ</b>`,
+                                 `<b>ΔPAT from the cut = savings × (1 − tax)</b><br>= ${ty(s.save)} × ${f0.format((1 - S.tax) * 100)}% = <b>${ty(s.dPAT)} bn</b>`) +
         (s.dProv ? L(`<br><b>ΔLNST do vĩ mô = ΔDP × (1 − thuế)</b> = ${sTy(s.dProv)} × ${f0.format((1 - S.tax) * 100)}% = <b>${sTy(s.dProvAT)} tỷ</b><br>ΔDP = ${sNum(scen(S.macro).dllp * 1e4)} bp × dư nợ ${ty(r.loans)}`,
                      `<br><b>ΔPAT from macro = Δprovisions × (1 − tax)</b> = ${sTy(s.dProv)} × ${f0.format((1 - S.tax) * 100)}% = <b>${sTy(s.dProvAT)} bn</b><br>Δprovisions = ${sNum(scen(S.macro).dllp * 1e4)} bp × loans ${ty(r.loans)}`) : '') +
         L(`<br>% = (LNST mới − LNST nền) / ${ty(r.pat)}`, `<br>% = (new PAT − base PAT) / ${ty(r.pat)}`))}</div>`;
@@ -990,18 +976,14 @@
       el.innerHTML = `<p class="desc">${L('LNST năm nền ≤ 0 nên không tính được tỷ lệ giữ lại. Chọn năm hoặc ngân hàng khác.', 'Base-year profit ≤ 0, so retention cannot be computed. Pick another year or bank.')}</p>`; return;
     }
     // mô hình là tuyến tính theo mức giảm (mỗi bp mất cùng một khoản), nên thông tin đáng giá nằm ở độ dốc,
-    // độ bất định của φ (khoảng tin cậy 95% của mô hình pass_bank) và khác biệt giữa các kịch bản vĩ mô
-    const ci = PASS_BANK && Math.abs(S.phi - PHI_DATA) < 1e-9 ? PASS_BANK.coefs.find(c => c.var === 'd_yield') : null;
+    // và khác biệt giữa các kịch bản vĩ mô
     const xmax = Math.max(200, Math.ceil(S.bp * 1.4 / 50) * 50, s.maxBp ? Math.min(500, Math.ceil(s.maxBp * 1.3 / 50) * 50) : 0);
     const curve = p => Array.from({ length: 121 }, (_, i) => { const b = xmax * i / 120; return [b, sim(r, b, { ...S, ...p }).retain]; });
-    const pts = curve({}), lo = ci ? curve({ phi: ci.lo }) : null, hi = ci ? curve({ phi: ci.hi }) : null;
+    const pts = curve({});
     const alt = ECON.scenarios.filter(sc => sc.id !== S.macro).map(sc => ({ sc, pts: curve({ macro: sc.id }) }));
     const per10 = sim(r, 0).retain - sim(r, 10).retain;
-    const mx = ci ? [sim(r, S.bp, { ...S, phi: ci.lo }).maxBp, sim(r, S.bp, { ...S, phi: ci.hi }).maxBp] : null;
-    $('sens-desc').textContent = L(`Mỗi 10 bp giảm lãi, ${r.bank} mất khoảng ${pct(per10)} lợi nhuận; vùng xanh là các mức vẫn đạt mục tiêu.`, `Every 10 bp cut costs ${r.bank} about ${pct(per10)} of profit; the green zone still meets the target.`) +
-      (mx && ok(mx[0]) && ok(mx[1]) ? L(` Tính cả độ bất định của phần bù chi phí vốn, mức giảm tối đa nằm trong khoảng ${f0.format(Math.floor(mx[0]))}–${f0.format(Math.floor(mx[1]))} bp.`,
-                                       ` Allowing for uncertainty in the funding offset, the maximum cut lies between ${f0.format(Math.floor(mx[0]))} and ${f0.format(Math.floor(mx[1]))} bp.`) : '');
-    const allY = [pts, lo || [], ...alt.map(a => a.pts)].flat().map(p => p[1]);
+    $('sens-desc').textContent = L(`Mỗi 10 bp giảm lãi, ${r.bank} mất khoảng ${pct(per10)} lợi nhuận; vùng xanh là các mức vẫn đạt mục tiêu.`, `Every 10 bp cut costs ${r.bank} about ${pct(per10)} of profit; the green zone still meets the target.`);
+    const allY = [pts, ...alt.map(a => a.pts)].flat().map(p => p[1]);
     // trần trục: 100%, trừ khi kịch bản thuận lợi đẩy lợi nhuận lên trên mức năm nền
     const yTop = Math.max(1, ...allY);
     const yt = ticks(Math.min(0.5, ...allY, S.q - 0.05), yTop, 5).filter(v => v <= yTop + 1e-9), y0 = yt[0], y1 = yTop;
@@ -1017,7 +999,6 @@
         <text class="t-strong" x="${xm + 6}" y="${m.t + 12}" style="fill:var(--good)">${L('Tối đa', 'Max')} ${f1.format(s.maxBp)} bp</text>`;
     }
     const path = P => P.map((p, i) => (i ? 'L' : 'M') + x(p[0]).toFixed(1) + ',' + y(p[1]).toFixed(1)).join('');
-    if (ci) g += `<path d="${path(hi)}${path(lo.slice().reverse()).replace('M', 'L')}Z" fill="var(--accent)" opacity=".14"/>`;
     // nhãn ở cuối đường: đường cao hơn ghi phía trên, đường thấp hơn ghi phía dưới, để hai nhãn không đè nhau
     alt.slice().sort((a, b) => b.pts[b.pts.length - 1][1] - a.pts[a.pts.length - 1][1]).forEach((a, i) => {
       const end = a.pts[a.pts.length - 1];
@@ -1036,7 +1017,6 @@
     const cur = ECON.scenarios.find(sc => sc.id === S.macro);
     el.innerHTML = `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${L('Đường độ nhạy LNST giữ lại theo mức giảm', 'Profit retained by rate cut')}">${g}</svg>
       <div class="legend"><span><i style="background:var(--accent)"></i>${cur ? L('Kịch bản ', '') + esc(scLabel(cur).toLowerCase()) + L('', ' scenario') : L('Mô phỏng', 'Simulation')}</span>` +
-      (ci ? `<span><i style="background:var(--accent);opacity:.3"></i>${L(`Khoảng tin cậy 95% của phần bù chi phí vốn (${pct(ci.lo, 0)}–${pct(ci.hi, 0)})`, `95% confidence interval of the funding offset (${pct(ci.lo, 0)}–${pct(ci.hi, 0)})`)}</span>` : '') +
       (alt.length ? `<span><i style="height:0;width:16px;border-radius:0;border-top:2px dashed var(--ink-2)"></i>${L('Các kịch bản vĩ mô khác', 'Other macro scenarios')}</span>` : '') + `</div>`;
     const svg = el.querySelector('svg'), hit = svg.querySelector('.hit'), sx = svg.querySelector('#sx'), sd = svg.querySelector('#sd');
     let hb = null;
@@ -1222,12 +1202,12 @@
   function drawFormulas() {
     $('formulas').innerHTML = [
       [L('Dư nợ hiệu lực', 'Effective loans'), L('E = α × Σ dư nợ nhóm kỳ định lại × tháng hưởng lãi mới / 12 (11,5; 10; 7,5; 3; trên 1 năm: 0). Nếu thiếu bảng: E = dư nợ × α × số tháng / 12', 'E = α × Σ loans in each repricing bucket × months at the new rate / 12 (11.5, 10, 7.5, 3; over 1 year: 0). Without the table: E = loans × α × months / 12')], [L('Người vay tiết kiệm', 'Borrower savings'), L('T = E × s / 10.000', 'T = E × s / 10,000')],
-      [L('Người gửi tiền gánh', 'Borne by depositors'), L('φ × T (φ = bù chi phí vốn)', 'φ × T (φ = funding cost offset)')], [L('LNTT giảm', 'Fall in PBT'), 'T × (1 − φ)'], [L('Ngân sách gánh', 'Borne by the budget'), L('T × (1 − φ) × thuế suất', 'T × (1 − φ) × tax rate')],
-      [L('LNST giảm', 'Fall in PAT'), L('T × (1 − φ) × (1 − thuế suất) + ΔDP vĩ mô × (1 − thuế suất)', 'T × (1 − φ) × (1 − tax) + macro Δprovisions × (1 − tax)')],
+      [L('LNTT giảm', 'Fall in PBT'), L('T (chi phí vốn giữ nguyên)', 'T (funding cost unchanged)')], [L('Ngân sách gánh', 'Borne by the budget'), L('T × thuế suất', 'T × tax rate')],
+      [L('LNST giảm', 'Fall in PAT'), L('T × (1 − thuế suất) + ΔDP vĩ mô × (1 − thuế suất)', 'T × (1 − tax) + macro Δprovisions × (1 − tax)')],
       [L('ΔDP vĩ mô', 'Macro Δprovisions'), L('Δ(chi phí DP / dư nợ) theo kịch bản × dư nợ', 'scenario Δ(provisions / loans) × loans')],
       [L('Trang trải dự phòng', 'Provision coverage'), L('(LN trước DP − LNTT giảm) / (Chi phí DP nền + ΔDP vĩ mô)', '(pre-provision profit − fall in PBT) / (base provisions + macro Δprovisions)')],
-      [L('CAR mới', 'New CAR'), L('CAR nền − LNST giảm × k / RWA', 'base CAR − fall in PAT × k / RWA')], [L('Mức giảm tối đa', 'Maximum cut'), L('[(1 − mục tiêu) × LNST nền − ΔDP vĩ mô × (1 − thuế)] / [E × (1 − φ) × (1 − thuế)] × 10.000', '[(1 − target) × base PAT − macro Δprovisions × (1 − tax)] / [E × (1 − φ) × (1 − tax)] × 10,000')],
-      [L('Điểm hòa vốn', 'Break-even cut'), L('(LNTT nền − ΔDP vĩ mô) / [E × (1 − φ)] × 10.000', '(base PBT − macro Δprovisions) / [E × (1 − φ)] × 10,000')]].map(([a, b]) => `<dt>${a}</dt><dd>${b}</dd>`).join('');
+      [L('CAR mới', 'New CAR'), L('CAR nền − LNST giảm × k / RWA', 'base CAR − fall in PAT × k / RWA')], [L('Mức giảm tối đa', 'Maximum cut'), L('[(1 − mục tiêu) × LNST nền − ΔDP vĩ mô × (1 − thuế)] / [E × (1 − thuế)] × 10.000', '[(1 − target) × base PAT − macro Δprovisions × (1 − tax)] / [E × (1 − tax)] × 10,000')],
+      [L('Điểm hòa vốn', 'Break-even cut'), L('(LNTT nền − ΔDP vĩ mô) / E × 10.000', '(base PBT − macro Δprovisions) / E × 10,000')]].map(([a, b]) => `<dt>${a}</dt><dd>${b}</dd>`).join('');
   }
   function drawLimits() {
     $('limits').innerHTML = [
@@ -1235,10 +1215,10 @@
         'Results are the incremental 12-month effect versus the base year, not a profit forecast. Loans, operating costs and other income are held constant.'),
       L('Thời điểm đổi lãi lấy từ bảng kỳ định lại lãi suất trong thuyết minh BCTC (sheet "Rủi ro lãi suất" của FiinPro), lấy trung điểm mỗi kỳ như đề xuất ALCO; VCB 2025 ra 2.666 tỷ ở 25 bp, khớp đề xuất. Khoản vay đổi lãi sau 1 năm không hưởng lãi mới trong cửa sổ 12 tháng. Năm thiếu bảng hoặc tổng các nhóm lệch dư nợ quá 10% thì dùng số tháng nhập tay (mặc định 12, cận trên).',
         'Repricing timing comes from the repricing table in the notes to the statements (FiinPro "interest rate risk" sheet), using bucket midpoints as in the ALCO proposal; VCB 2025 gives VND 2,666 bn at 25 bp, matching the proposal. Loans repricing after one year get no new rate within the 12-month window. Years without the table, or where buckets differ from loans by over 10%, fall back to the manual months (default 12, an upper bound).'),
-      L(`"Chi phí vốn giảm theo" mặc định ${pct(PHI_DATA, 0)}: hệ số truyền dẫn khi riêng một ngân hàng đổi lãi (hồi quy panel có hiệu ứng cố định năm). Đây là tương quan lịch sử, không phải cam kết; 0% là kịch bản xấu nhất.`,
-        `"Funding cost offset" defaults to ${pct(PHI_DATA, 0)}: the pass-through when one bank moves alone (panel regression with year fixed effects). A historical correlation, not a guarantee; 0% is the worst case.`),
-      L('Tác động là tuyến tính theo mức giảm: mỗi bp làm mất cùng một khoản lợi nhuận. Thực tế có thể cong, vì phần bù chi phí vốn có thể đổi theo mức giảm và lãi thấp hơn giúp người vay trả nợ tốt hơn; dữ liệu năm không đủ để ước lượng độ cong này. Dải mờ trên biểu đồ thể hiện độ bất định của phần bù chi phí vốn.',
-        'The impact is linear in the cut: every bp costs the same amount of profit. In reality it may curve, since the funding offset can change with the size of the cut and lower rates help borrowers repay; annual data cannot estimate this curvature. The shaded band on the chart shows the uncertainty in the funding offset.'),
+      L('Chi phí vốn giữ nguyên: ngân hàng không hạ lãi huy động, nên gánh toàn bộ khoản giảm lãi. Đây là trường hợp xấu nhất, giống giả định của đề xuất ALCO; nhóm không dùng hệ số truyền dẫn ước lượng vì chưa chứng minh được tác động nhân quả.',
+        'Funding cost unchanged: the bank does not lower deposit rates, so it bears the whole cut. This is the worst case, the same assumption as the ALCO proposal; the team does not use an estimated pass-through because a causal effect has not been shown.'),
+      L('Tác động là tuyến tính theo mức giảm: mỗi bp làm mất cùng một khoản lợi nhuận. Thực tế có thể cong, vì lãi thấp hơn giúp người vay trả nợ tốt hơn; dữ liệu năm không đủ để ước lượng độ cong này.',
+        'The impact is linear in the cut: every bp costs the same amount of profit. In reality it may curve, since lower rates help borrowers repay; annual data cannot estimate this curvature.'),
       L('Mô phỏng giả định mỗi bp NIM mất làm ROA mất 0,8 bp; mô hình panel cho thấy ngân hàng thường bù được một phần, nên thiệt hại LNST là cận trên.',
         'The simulator assumes each bp of lost NIM costs 0.8 bp of ROA; the panel model shows banks usually recover part of it, so the profit hit is an upper bound.'),
       L('Dư nợ là số dư cuối năm nền, gộp trước dự phòng. NIM tính trên tổng tài sản, nên chỉ là đại diện cho NIM trên tài sản sinh lãi.',
@@ -1450,22 +1430,20 @@
   function render() {
     const r = S.year === 'all' ? null : row(S.bank, S.year);
     $('bank').value = S.bank; $('year').value = S.year; $('bp').value = $('bp2').value = S.bp; $('bpRange').value = $('bpRange2').value = Math.min(300, S.bp);
-    if (document.activeElement !== $('phi2')) $('phi2').value = Math.round(S.phi * 1000) / 10;
     syncMini();
-    ['alpha', 'phi'].forEach(id => { if (document.activeElement !== $(id)) $(id).value = Math.round(S[id] * 1000) / 10; });
+    if (document.activeElement !== $('alpha')) $('alpha').value = Math.round(S.alpha * 1000) / 10;
     // ô số tháng: theo bảng kỳ định lại thì hiện số tháng tương đương (E / dư nợ × 12)
     const rpOn = S.timing === 'reprice' && r && r.rp_ok;
     if (document.activeElement !== $('months')) $('months').value = rpOn && S.alpha > 0 ? Math.round(sim(r, 0).E / (r.loans * S.alpha) * 120) / 10 : S.months;
     $('timing-presets').innerHTML = `<button data-timing="reprice" aria-pressed="${S.timing === 'reprice'}" data-tip="${esc(L('Tính từ bảng kỳ định lại lãi suất trong thuyết minh BCTC', 'From the repricing table in the notes to the statements'))}">${L('Theo BCTC', 'From statements')}</button>` +
       `<button data-timing="12" aria-pressed="${S.timing === 'manual' && S.months === 12}" data-tip="${esc(L('Toàn bộ dư nợ đổi lãi ngay: cận trên của tác động', 'All loans reprice at once: upper bound'))}">${L('12 tháng (cận trên)', '12 months (upper bound)')}</button>`;
     $('timing-note').textContent = S.timing === 'reprice' && r && !r.rp_ok ? L('Năm này thiếu bảng kỳ định lại, đang dùng số tháng nhập tay', 'No repricing table this year; using manual months') : '';
-    $('assump-sum').textContent = '· ' + L(`Dư nợ được giảm lãi ${f0.format(S.alpha * 100)}% · đổi lãi ${S.year === 'all' && S.timing === 'reprice' ? 'theo BCTC của từng năm' : rpOn ? `theo BCTC (≈ ${f1.format(+$('months').value)} tháng)` : `trong ${f1.format(S.months)} tháng`} · chi phí vốn bù ${pct(S.phi, 0)} · bấm để chỉnh`,
-                                                     `Loans repriced ${f0.format(S.alpha * 100)}% · repricing ${S.year === 'all' && S.timing === 'reprice' ? "from each year's statements" : rpOn ? `from statements (≈ ${f1.format(+$('months').value)} months)` : `within ${f1.format(S.months)} months`} · funding offset ${pct(S.phi, 0)} · click to edit`);
+    $('assump-sum').textContent = '· ' + L(`Dư nợ được giảm lãi ${f0.format(S.alpha * 100)}% · đổi lãi ${S.year === 'all' && S.timing === 'reprice' ? 'theo BCTC của từng năm' : rpOn ? `theo BCTC (≈ ${f1.format(+$('months').value)} tháng)` : `trong ${f1.format(S.months)} tháng`} · chi phí vốn giữ nguyên · bấm để chỉnh`,
+                                                     `Loans repriced ${f0.format(S.alpha * 100)}% · repricing ${S.year === 'all' && S.timing === 'reprice' ? "from each year's statements" : rpOn ? `from statements (≈ ${f1.format(+$('months').value)} months)` : `within ${f1.format(S.months)} months`} · funding cost unchanged · click to edit`);
     $('q-seg').innerHTML = [0.85, 0.9, 0.95].map(q => `<button data-q="${q}" aria-pressed="${Math.abs(S.q - q) < 1e-9}">${f0.format(q * 100)}%</button>`).join('');
     $('bp-pct').textContent = '= ' + f2.format(S.bp / 100) + L(' điểm %', ' pp');
     document.querySelectorAll('#chips .chip, #chips2 .chip').forEach(c => c.setAttribute('aria-pressed', +c.dataset.bp === S.bp));
     document.querySelectorAll('#cmp-seg button').forEach(c => c.setAttribute('aria-pressed', c.dataset.m === S.cmp));
-    document.querySelectorAll('#phi-presets button').forEach(c => c.setAttribute('aria-pressed', Math.abs(+c.dataset.phi - S.phi) < 1e-9));
     document.querySelectorAll('.tabs button').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === S.tab));
     ['sim', 'met'].forEach(t => $('tab-' + t).hidden = S.tab !== t);
     drawMacroRow();
@@ -1516,14 +1494,12 @@
   $('year').addEventListener('change', e => { S.year = e.target.value === 'all' ? 'all' : +e.target.value; render(); });
   ['bp', 'bpRange', 'bp2', 'bpRange2'].forEach(id => $(id).addEventListener('input', e => setBp(e.target.value)));
   ['chips', 'chips2'].forEach(id => $(id).addEventListener('click', e => { if (e.target.dataset.bp) setBp(e.target.dataset.bp); }));
-  $('phi2').addEventListener('input', e => { S.phi = Math.max(0, Math.min(100, +e.target.value || 0)) / 100; render(); });
   // thanh gọn chỉ hiện ở tab Mô phỏng, khi khung điều chỉnh chính đã cuộn khỏi màn hình
   let ctrlVisible = true;
   function syncMini() { $('mini').hidden = ctrlVisible || S.tab !== 'sim'; }
   if ('IntersectionObserver' in window)
     new IntersectionObserver(([e]) => { ctrlVisible = e.isIntersecting; syncMini(); }, { threshold: 0 }).observe($('controls'));
   $('cmp-seg').addEventListener('click', e => { if (e.target.dataset.m) { S.cmp = e.target.dataset.m; render(); } });
-  $('phi-presets').addEventListener('click', e => { if (e.target.dataset.phi != null) { S.phi = +e.target.dataset.phi; render(); } });
   // tự chạy hồi quy: mỗi thay đổi ước lượng lại ngay
   $('lab-card').addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b || b.disabled) return;
@@ -1562,7 +1538,7 @@
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('memo-wrap').hidden) closeMemo(); });
   $('q-seg').addEventListener('click', e => { if (e.target.dataset.q) { S.q = +e.target.dataset.q; render(); } });
   $('months').addEventListener('input', () => { S.timing = 'manual'; });   // gõ số tháng = chuyển sang nhập tay
-  [['alpha', 100], ['months', 12], ['phi', 100]].forEach(([id, hi]) =>
+  [['alpha', 100], ['months', 12]].forEach(([id, hi]) =>
     $(id).addEventListener('input', e => { const v = Math.max(0, Math.min(hi, +e.target.value || 0)); S[id] = id === 'months' ? v : v / 100; render(); }));
   let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(render, 120); });
   const footer = () => $('footer').textContent = L(`Nguồn: ${META.source}. Vĩ mô: FiinX (GSO, NHNN). Dữ liệu dựng ${META.built}. Mã nguồn: scripts/build_dataset.py, export_dashboard_data.py, analysis.py, econometrics.py, dashboard/index.html. VietLeap Hackathon 2026.`,
