@@ -40,15 +40,13 @@ Chuẩn bị trước khi lên:
 > - **Three**, capital adequacy: CAR must stay **at or above 8%**, the State Bank's minimum.
 > - **Four**, provision coverage: this year's operating profit must still cover loan-loss provisions **at least once**. Below that, the bank makes a loss.
 
-## Slide 4: Two layers, one decision (TK, khoảng 45 giây)
+## Slide 4: Two layers, one decision (TK, khoảng 30 giây)
 
-> How do we compute this? Two layers, built on **25 listed Vietnamese banks over 10 years, 250 bank-year observations** of audited statements.
+> Our model has two layers, built on **25 listed banks over 10 years**.
 >
-> [Chỉ vào 01] **Layer one is an accounting simulator.** It works on one bank's own financial statements. A key detail: not every loan gets the new rate at once. We use the **repricing schedule** in the notes to the statements: a loan that reprices next month gets the cut for eleven and a half months, a loan that reprices in a year gets almost nothing. And we take the **worst case**: the bank does not lower deposit rates, so it bears the whole cut.
+> [Chỉ vào 01] **Layer one simulates the cut** on each bank's own statements. Only loans that reprice within the year get the new rate, and we assume the bank can't lower deposit rates: **the worst case**.
 >
-> [Chỉ vào 02] **Layer two is econometric validation.** Panel regressions on the 25 banks, 2020 to 2025, test the simulator's assumptions. Two findings matter:
-> - In reality profit and capital fall *less* than our formulas assume, so our numbers are a **conservative upper bound** on the damage.
-> - When GDP growth slows by one point, provisions rise by about **4 basis points of loans**. That drives our adverse economic scenario.
+> [Chỉ vào 02] **Layer two tests it** with panel regressions. They show our numbers are a **conservative upper bound**, and they give us the **adverse scenario**: when the economy slows, provisions rise.
 
 ## Slide 5: What does a 25 bp cut really mean? (TH, khoảng 40 giây)
 
