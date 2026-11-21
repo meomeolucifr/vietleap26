@@ -141,10 +141,11 @@ Tab Phương pháp & dữ liệu:
 - Bốn thẻ mô hình kiểm chứng (pass_bank, roa_det, car_resp, llp_macro): biểu đồ added-variable (độ dốc = hệ số),
   đường giả định của mô phỏng, câu kết luận tự tính, nhãn ý nghĩa thống kê; nút bật/tắt FE năm, bỏ đuôi 0/1/5%,
   SE cụm/D-K tính lại ngay. Thẻ dự phòng vẽ GDP và chi phí dự phòng theo năm (hai biểu đồ nhỏ, không trục kép).
-- "Tự chạy hồi quy": chọn mô hình có sẵn hoặc tự chọn biến, FE, SE, mẫu; bảng hệ số có thanh CI và biểu đồ;
-  biến vĩ mô tự khoá khi bật FE năm.
-- Bảng biến (công thức, dòng BCTC, nguồn Cục Thống kê/NHNN), số liệu nền truy về dòng nguồn, kiểm tra chất lượng
-  dữ liệu, công thức, giả định và hạn chế, thuật ngữ (rê chuột chữ gạch chấm để xem giải thích).
+- Dưới mỗi thẻ mô hình có một câu "Cách đọc" bằng lời thường.
+- "Tự chạy hồi quy": biến phụ thuộc là một chỉ số an toàn (ROA, CAR, NIM, khả năng trang trải dự phòng), biến giải
+  thích là tăng trưởng GDP, CPI bình quân, tăng trưởng tín dụng toàn hệ thống; cố định FE ngân hàng và bỏ 1% đuôi,
+  SE Driscoll-Kraay hoặc robust; bảng hệ số có thanh CI, mỗi hệ số một câu diễn giải, và biểu đồ.
+- Bảng biến (công thức, dòng BCTC, nguồn Cục Thống kê/NHNN), số liệu nền truy về dòng nguồn, công thức, giả định và hạn chế, thuật ngữ (rê chuột chữ gạch chấm để xem giải thích).
 Chữ viết thành câu tự nhiên, gọn; giải thích kỹ thuật để trong tooltip. Chạy thử trên trình duyệt, chụp màn hình
 kiểm tra nhãn đè, tràn, lỗi console.
 ```

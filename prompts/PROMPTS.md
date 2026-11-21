@@ -154,10 +154,11 @@ Method & data tab:
   simulator's assumption line, an auto-generated takeaway, a significance badge; buttons to switch year FE,
   trimming 0/1/5% and clustered/Driscoll-Kraay SE that re-estimate instantly. The provision card shows GDP and
   provisions by year (two small charts, no dual axis).
-- "Run your own regression": pick a ready-made model or choose variables, FE, SE and sample; coefficient table with
-  CI bars and a chart; macro variables lock when year FE is on.
-- Variables table (formula, statement line, GSO/SBV source), source data traced to statement lines, data-quality
-  checks, formulas, assumptions and limitations, glossary (hover dotted terms for definitions).
+- Under each model card, one plain-language "How to read" sentence.
+- "Run your own regression": dependent variable is one safety indicator (ROA, CAR, NIM, provision coverage), regressors
+  are GDP growth, average CPI and system credit growth; bank FE and 1% trimming fixed, Driscoll-Kraay or robust SE;
+  coefficient table with CI bars, one sentence per coefficient, and a chart.
+- Variables table (formula, statement line, GSO/SBV source), source data traced to statement lines, formulas, assumptions and limitations, glossary (hover dotted terms for definitions).
 Write text as short natural sentences; keep technical detail in tooltips. Test in a browser and take screenshots to
 check for overlapping labels, overflow and console errors.
 ```

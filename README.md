@@ -44,7 +44,7 @@ Opening `dashboard/index.html` directly in a browser also works.
 
 ## Adding or changing a regression model
 
-Edit the `MODELS` list at the top of [scripts/econometrics.py](scripts/econometrics.py): dependent variable, regressors, bank/year fixed effects, standard-error type, and the auto-generated takeaway. Re-run `python scripts/econometrics.py`; results go to `dashboard/econ.js`, and the dashboard's "Run your own regression" panel picks up the new model. Available variables are built in `panel()` in [scripts/analysis.py](scripts/analysis.py).
+Edit the `MODELS` list at the top of [scripts/econometrics.py](scripts/econometrics.py): dependent variable, regressors, bank/year fixed effects, standard-error type, and the auto-generated takeaway. Re-run `python scripts/econometrics.py`; results go to `dashboard/econ.js`. Models listed in `MAIN` are drawn as cards on the Method & data tab. Available variables are built in `panel()` in [scripts/analysis.py](scripts/analysis.py).
 
 Macro scenarios (Favourable / Base / Adverse) are defined in `SCENARIOS` in the same file: each is the macro change between two actual years, passed through the `llp_macro` model to a change in the provision rate, which the simulator then applies.
 

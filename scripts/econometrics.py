@@ -35,7 +35,7 @@ import build_dataset as b
 OUT = os.path.join(b.ROOT, 'dashboard', 'econ.js')
 PANEL_OUT = os.path.join(b.ROOT, 'dashboard', 'panel.js')
 # biến thêm cho người dùng tự chọn trên dashboard, ngoài các biến đã dùng trong MODELS
-PANEL_EXTRA = ['cost', 'yield', 'roe', 'ldr', 'nonii', 'd_nim', 'd_roa', 'credit_growth']
+PANEL_EXTRA = ['cost', 'yield', 'roe', 'ldr', 'nonii', 'd_nim', 'd_roa', 'credit_growth', 'car', 'cov', 'nim', 'roa']
 RWA_TA = 0.82  # tỷ lệ RWA / tổng tài sản trung vị; cập nhật từ dữ liệu trong __main__
 # 4 mô hình chính, mỗi mô hình kiểm chứng một chỉ số an toàn trên dashboard; dashboard vẽ biểu đồ cho từng cái
 MAIN = ['pass_bank', 'roa_det', 'car_resp', 'llp_macro']
