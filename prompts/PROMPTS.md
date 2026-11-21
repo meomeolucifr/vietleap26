@@ -155,7 +155,9 @@ Method & data tab:
   with no option buttons. The provision card shows GDP and
   provisions by year (two small charts, no dual axis).
 - Under each model card, one plain-language "How to read" sentence.
-- "Run your own regression": dependent variable is one safety indicator (ROA, CAR, NIM, provision coverage), regressors
+- "Run your own regression": a tray of all financial-statement ratios that the user drags (or clicks) into a
+  dependent-variable box (one ratio) and a regressor box (several). Typical dependent variable: a safety indicator (ROA,
+  CAR, NIM, provision coverage); regressors
   are financial-statement ratios (ROA, ROE, NIM, CAR, provision coverage, CIR, NPL, equity/assets, size, loans/assets,
   LDR, loan growth, non-interest income share) other than the dependent variable, no macro variables; bank FE and 1%
   trimming fixed, Driscoll-Kraay or robust SE; coefficient table with a VIF column (bank-demeaned regressors; mark

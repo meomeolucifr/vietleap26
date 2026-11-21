@@ -212,6 +212,22 @@
   .lab-grid { display: grid; grid-template-columns: minmax(280px, 380px) 1fr; gap: 24px; align-items: start; }
   @media (max-width: 980px) { .lab-grid { grid-template-columns: 1fr; } }
   .lab-ctl { display: grid; gap: 14px; }
+  /* kéo-thả chỉ số vào hai ô biến */
+  .lab-pool, .lab-zone { display: flex; flex-wrap: wrap; gap: 6px; align-content: flex-start; padding: 10px; border-radius: 12px; }
+  .lab-pool { background: var(--card-2); border: 1px solid var(--line); min-height: 48px; }
+  .lab-zone { border: 1.5px dashed var(--line-2); min-height: 52px; transition: border-color .12s, background-color .12s; }
+  .lab-zone.y { min-height: 46px; }
+  .lab-zone.over, .lab-pool.over { border-color: var(--accent); background: var(--accent-soft); }
+  .lab-zone .ph { color: var(--muted); font-size: 12.5px; align-self: center; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 999px; font-size: 13px; line-height: 1.3;
+          border: 1px solid var(--line-2); background: var(--card); color: var(--ink); cursor: grab; user-select: none; }
+  .chip:hover { border-color: var(--accent); }
+  .chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .chip.dragging { opacity: .45; }
+  .lab-zone .chip { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .lab-zone.y .chip { background: var(--hero); border-color: var(--hero); }
+  .lab-zone .chip .x { font-size: 14px; line-height: 1; opacity: .8; }
+  .lab-hint { color: var(--muted); font-size: 12px; margin-top: -6px; }
   .lab-ctl .k-label { display: block; font-size: 12px; color: var(--ink-2); font-weight: 600; margin-bottom: 6px; }
   .lab-ctl select { width: 100%; border-radius: 10px; padding: 7px 32px 7px 10px; border-color: var(--line-2); }
   .pick { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -516,8 +532,8 @@
     mmDesc: ['Mỗi biểu đồ là một mô hình hồi quy panel. Mỗi chấm là một ngân hàng-năm sau khi đã loại khác biệt riêng của từng ngân hàng, biến động chung của từng năm và các biến kiểm soát; độ dốc đường xanh đúng bằng hệ số hồi quy. Đường nét đứt là giả định mà mô phỏng đang dùng. Cả bốn mô hình dùng chung dữ liệu 2020–2025, giai đoạn mọi ngân hàng tính CAR theo Thông tư 41.',
              'Each chart is one panel regression. Each dot is a bank-year after removing each bank\'s fixed differences, each year\'s common moves and the controls; the slope of the blue line equals the regression coefficient. Dashed lines are what the simulator assumes. All four models use the same 2020–2025 data, the period in which every bank reports CAR under Circular 41.'],
     labTitle: ['Tự chạy hồi quy', 'Run your own regression'],
-    labDesc: ['Chọn một chỉ số an toàn làm biến phụ thuộc, rồi chọn biến độc lập trong các chỉ số tài chính trên báo cáo tài chính. Cột VIF kiểm tra các biến độc lập có trùng thông tin nhau không. Kết quả tính lại ngay trên trình duyệt với dữ liệu {n} ngân hàng × 10 năm, cùng cách tính với mã Python của nhóm (linearmodels).',
-              'Pick a safety indicator as the dependent variable, then choose regressors from financial-statement ratios. The VIF column checks whether the regressors overlap. Results are re-estimated in the browser on {n} banks × 10 years, with the same method as the team\'s Python code (linearmodels).'],
+    labDesc: ['Kéo các chỉ số tài chính trên báo cáo tài chính vào ô biến phụ thuộc và ô biến độc lập. Cột VIF kiểm tra các biến độc lập có trùng thông tin nhau không. Kết quả tính lại ngay trên trình duyệt với dữ liệu {n} ngân hàng × 10 năm, cùng cách tính với mã Python của nhóm (linearmodels).',
+              'Drag financial-statement ratios into the dependent-variable and regressor boxes. The VIF column checks whether the regressors overlap. Results are re-estimated in the browser on {n} banks × 10 years, with the same method as the team\'s Python code (linearmodels).'],
     miniBp: ['Mức giảm', 'Rate cut'],
     assumpTitle: ['Giả định', 'Assumptions'],
     memoBtn: ['Tóm tắt cho ALCO', 'Summary for ALCO'],
@@ -727,11 +743,9 @@
   }
 
   // ---------- tự chạy hồi quy (dashboard/regress.js) ----------
-  // chỉ số an toàn (biến phụ thuộc) theo các chỉ số tài chính trên BCTC của chính ngân hàng (biến độc lập); giữ cố định
+  // kéo các chỉ số tài chính trên BCTC vào ô biến phụ thuộc (một biến) và ô biến độc lập (nhiều biến); giữ cố định
   // khác biệt riêng từng ngân hàng (FE ngân hàng) và bỏ 1% hai đuôi; VIF kiểm tra tương quan giữa các biến độc lập.
-  // Đơn vị biến độc lập: pp = tỷ lệ (đọc theo 1 điểm %), log = quy mô, x = số lần.
-  const LAB_Y = { roa: ['Lợi nhuận sau thuế / tổng tài sản (ROA)', 'Profit after tax / total assets (ROA)'], car: ['CAR', 'CAR'],
-                  nim: ['NIM', 'NIM'], cov: ['Khả năng trang trải dự phòng (lần)', 'Provision coverage (×)'] };
+  // Đơn vị: pp = tỷ lệ (đọc theo 1 điểm %), log = quy mô, x = số lần.
   const LAB_FIN = { roa: ['ROA', 'ROA', 'pp'], roe: ['ROE', 'ROE', 'pp'], nim: ['NIM', 'NIM', 'pp'], car: ['CAR', 'CAR', 'pp'],
                     cov: ['Khả năng trang trải dự phòng', 'Provision coverage', 'x'], cir: ['Chi phí / thu nhập (CIR)', 'Cost / income (CIR)', 'pp'],
                     npl: ['Tỷ lệ nợ xấu', 'NPL ratio', 'pp'], cap: ['Vốn chủ sở hữu / tổng tài sản', 'Equity / total assets', 'pp'],
@@ -740,22 +754,36 @@
                     nonii: ['Tỷ trọng thu nhập ngoài lãi', 'Non-interest income share', 'pp'] };
   const LAB_X = LAB_FIN, LAB_ORDER = Object.keys(LAB_FIN);
   const LAB = { spec: { y: 'roa', x: ['cir', 'npl', 'cap', 'size', 'loans_ta'], entity: true, time: false, trim: 1, cov: 'kernel' } };
-  function labLabel(c, asX) { const t = (asX ? LAB_X[c] : LAB_Y[c]) || LAB_X[c] || LAB_Y[c]; return t ? L(t[0], t[1]) : (S.lang === 'en' ? PANEL.labels_en : PANEL.labels)[c] || c; }
+  function labLabel(c) { const t = LAB_X[c]; return t ? L(t[0], t[1]) : (S.lang === 'en' ? PANEL.labels_en : PANEL.labels)[c] || c; }
+  // chuyển một chỉ số tới 'y', 'x' hoặc 'pool' (khay); ô biến phụ thuộc chỉ giữ một biến, biến cũ trở về khay
+  function labMove(v, to) {
+    const sp = LAB.spec;
+    sp.x = sp.x.filter(c => c !== v); if (sp.y === v) sp.y = null;
+    if (to === 'y') sp.y = v;
+    if (to === 'x') sp.x = LAB_ORDER.filter(c => c === v || sp.x.includes(c));
+    drawLab();
+  }
   function drawLab() {
     if (!PANEL || !window.Regress) { $('lab-card').hidden = true; return; }
     const sp = LAB.spec;
+    const avail = LAB_ORDER.filter(c => PANEL.cols.includes(c)), pool = avail.filter(c => c !== sp.y && !sp.x.includes(c));
+    const chip = (c, inZone) => `<span class="chip" draggable="true" tabindex="0" role="button" data-var="${c}" data-tip="${esc(inZone ? L('Kéo ra khay hoặc bấm để bỏ', 'Drag back or click to remove') : L('Kéo vào một ô, hoặc bấm để thêm', 'Drag into a box, or click to add'))}">${esc(labLabel(c))}${inZone ? '<span class="x" aria-hidden="true">×</span>' : ''}</span>`;
     $('lab-ctl').innerHTML = `
-      <div><span class="k-label">${L('Chỉ số an toàn (biến phụ thuộc)', 'Safety indicator (dependent variable)')}</span>
-        <select id="lab-y">${Object.keys(LAB_Y).filter(c => PANEL.cols.includes(c)).map(c => `<option value="${c}" ${c === sp.y ? 'selected' : ''}>${esc(labLabel(c))}</option>`).join('')}</select></div>
-      <div><span class="k-label">${L('Biến độc lập: chỉ số tài chính trên BCTC', 'Regressors: financial-statement ratios')}</span><div class="pick" id="lab-x">${Object.keys(LAB_FIN).filter(c => c !== sp.y && PANEL.cols.includes(c)).map(c =>
-        `<button data-x="${c}" aria-pressed="${sp.x.includes(c)}">${esc(labLabel(c, true))}</button>`).join('')}</div></div>
+      <div><span class="k-label">${L('Các chỉ số trên báo cáo tài chính', 'Financial-statement ratios')}</span>
+        <div class="lab-pool" data-zone="pool">${pool.map(c => chip(c, false)).join('') || `<span class="desc">${L('Đã dùng hết các chỉ số', 'All ratios in use')}</span>`}</div></div>
+      <p class="lab-hint">${L('Kéo chỉ số vào hai ô bên dưới. Bấm một chỉ số trong khay để thêm nhanh: vào ô biến phụ thuộc nếu ô đó trống, nếu không thì vào ô biến độc lập.', 'Drag ratios into the two boxes below. Click a ratio to add it: to the dependent box if empty, otherwise to the regressors.')}</p>
+      <div><span class="k-label">${L('Biến phụ thuộc (Y, một biến)', 'Dependent variable (Y, one)')}</span>
+        <div class="lab-zone y" data-zone="y">${sp.y ? chip(sp.y, true) : `<span class="ph">${L('Kéo một chỉ số vào đây', 'Drop one ratio here')}</span>`}</div></div>
+      <div><span class="k-label">${L('Biến độc lập (X)', 'Regressors (X)')}</span>
+        <div class="lab-zone" data-zone="x" id="lab-x">${sp.x.map(c => chip(c, true)).join('') || `<span class="ph">${L('Kéo một hoặc nhiều chỉ số vào đây', 'Drop one or more ratios here')}</span>`}</div></div>
       <div><span class="k-label">${L('Sai số chuẩn', 'Standard errors')}</span>
         <select id="lab-cov">${[['kernel', 'Driscoll-Kraay'], ['robust', 'Robust (White)']].map(([v, t]) => `<option value="${v}" ${v === sp.cov ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
-      <p class="desc" style="margin:0">${L('Đã loại khác biệt cố định giữa các ngân hàng và bỏ 1% quan sát cực đoan ở mỗi đầu. Chọn CAR làm biến độc lập thì mẫu chỉ còn từ 2019.', 'Fixed differences between banks are removed and the most extreme 1% at each end is dropped. Choosing CAR as a regressor limits the sample to 2019 onwards.')}</p>`;
+      <p class="desc" style="margin:0">${L('Đã loại khác biệt cố định giữa các ngân hàng và bỏ 1% quan sát cực đoan ở mỗi đầu. Dùng CAR thì mẫu chỉ còn từ 2019.', 'Fixed differences between banks are removed and the most extreme 1% at each end is dropped. Using CAR limits the sample to 2019 onwards.')}</p>`;
     drawLabResult();
   }
   function drawLabResult() {
     const sp = LAB.spec, el = $('lab-out'), x = sp.x;
+    if (!sp.y) { el.innerHTML = `<p class="desc">${L('Kéo một chỉ số vào ô biến phụ thuộc.', 'Drop a ratio into the dependent-variable box.')}</p>`; return; }
     if (!x.length) { el.innerHTML = `<p class="desc">${L('Chọn ít nhất một biến độc lập.', 'Pick at least one regressor.')}</p>`; return; }
     let r;
     if (!x.includes(LAB.plot)) LAB.plot = x[0];
@@ -774,7 +802,7 @@
       if (mid.length) return `<p class="desc" style="color:var(--warn);margin-top:8px">${L(`Cần lưu ý (VIF 5–10): ${names(mid)}. Các biến này tương quan khá mạnh với biến khác.`, `Watch (VIF 5–10): ${names(mid)}. These regressors are fairly strongly correlated with others.`)}</p>`;
       return `<p class="desc" style="margin-top:8px">${L(`Kiểm định VIF: mọi biến độc lập dưới 5 (cao nhất ${f1.format(Math.max(...cs.map(c => c.vif)))}), không có dấu hiệu đa cộng tuyến.`, `VIF check: every regressor is below 5 (highest ${f1.format(Math.max(...cs.map(c => c.vif)))}), no sign of multicollinearity.`)}</p>`; };
     // đọc hệ số bằng lời: biến độc lập tăng một bước thì chỉ số an toàn đổi bao nhiêu (CAR, ROA, NIM theo điểm %; trang trải theo lần)
-    const ySc = sp.y === 'cov' ? 1 : 100, yU = sp.y === 'cov' ? L(' lần', '×') : L(' điểm %', ' pp');
+    const yUnit = (LAB_X[sp.y] || [])[2] || 'pp', ySc = yUnit === 'pp' ? 100 : 1, yU = yUnit === 'pp' ? L(' điểm %', ' pp') : yUnit === 'x' ? L(' lần', '×') : L(' (log)', ' (log)');
     const xu = c => (LAB_X[c] || [])[2] || 'pp';
     const step = { pp: [0.01, 'cao hơn 1 điểm %', '1 pp higher'], log: [Math.log(1.1), 'lớn hơn 10% (tổng tài sản)', '10% larger (total assets)'], x: [1, 'cao hơn 1 lần', '1× higher'] };
     const say = c => { const [dx, vi, en] = step[xu(c.var)], v = c.b * dx * ySc, d = v < 0 ? L('giảm', 'falls by') : L('tăng', 'rises by');
@@ -793,7 +821,7 @@
       <p class="desc" style="margin-top:8px">${L('*** p < 0,01 · ** p < 0,05 · * p < 0,1. Chấm xanh: có ý nghĩa ở mức 5%. Đây là tương quan có điều kiện, không phải quan hệ nhân quả.', '*** p < 0.01 · ** p < 0.05 · * p < 0.1. Blue dot: significant at 5%. These are conditional correlations, not causal effects.')}</p>`;
     const pc = r.coefs.find(k => k.var === LAB.plot);
     const pu = xu(LAB.plot);
-    avpPlot($('lab-chart'), r.avp, { b: pc.b, sx: pu === 'pp' ? 100 : 1, sy: ySc, xl: labLabel(LAB.plot, true) + (pu === 'pp' ? L(' (điểm %)', ' (pp)') : pu === 'x' ? L(' (lần)', ' (×)') : ''), yl: labLabel(sp.y) + (sp.y === 'cov' ? L(' (lần)', ' (×)') : L(' (điểm %)', ' (pp)')), refs: [] });
+    avpPlot($('lab-chart'), r.avp, { b: pc.b, sx: pu === 'pp' ? 100 : 1, sy: ySc, xl: labLabel(LAB.plot, true) + (pu === 'pp' ? L(' (điểm %)', ' (pp)') : pu === 'x' ? L(' (lần)', ' (×)') : ''), yl: labLabel(sp.y) + (yUnit === 'pp' ? L(' (điểm %)', ' (pp)') : yUnit === 'x' ? L(' (lần)', ' (×)') : ''), refs: [] });
   }
 
   // ---------- biến: công thức, dòng báo cáo tài chính, nơi lấy ----------
@@ -1646,13 +1674,23 @@
     const b = e.target.closest('button'); if (!b || b.disabled) return;
     const sp = LAB.spec;
     if (b.dataset.plot) { LAB.plot = b.dataset.plot; drawLabResult(); return; }
-    if (!b.dataset.x) return;
-    sp.x = sp.x.includes(b.dataset.x) ? sp.x.filter(c => c !== b.dataset.x) : LAB_ORDER.filter(c => c === b.dataset.x || sp.x.includes(c));
-    drawLab();
   });
+  // chỉ số: bấm hoặc Enter để chuyển (khay → ô Y nếu trống, không thì ô X; trong ô → về khay)
+  const labChipAct = el => { const v = el.dataset.var, inPool = el.closest('[data-zone]').dataset.zone === 'pool';
+    labMove(v, inPool ? (LAB.spec.y ? 'x' : 'y') : 'pool'); };
+  $('lab-card').addEventListener('click', e => { const c = e.target.closest('.chip'); if (c) labChipAct(c); });
+  $('lab-card').addEventListener('keydown', e => { const c = e.target.closest('.chip'); if (c && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); labChipAct(c); } });
+  $('lab-card').addEventListener('dragstart', e => { const c = e.target.closest('.chip'); if (!c) return;
+    e.dataTransfer.setData('text/plain', c.dataset.var); e.dataTransfer.effectAllowed = 'move'; c.classList.add('dragging'); });
+  $('lab-card').addEventListener('dragend', e => { const c = e.target.closest('.chip'); if (c) c.classList.remove('dragging');
+    document.querySelectorAll('#lab-card .over').forEach(z => z.classList.remove('over')); });
+  $('lab-card').addEventListener('dragover', e => { const z = e.target.closest('[data-zone]'); if (!z) return;
+    e.preventDefault(); e.dataTransfer.dropEffect = 'move'; z.classList.add('over'); });
+  $('lab-card').addEventListener('dragleave', e => { const z = e.target.closest('[data-zone]'); if (z && !z.contains(e.relatedTarget)) z.classList.remove('over'); });
+  $('lab-card').addEventListener('drop', e => { const z = e.target.closest('[data-zone]'); if (!z) return; e.preventDefault();
+    const v = e.dataTransfer.getData('text/plain'); if (v && LAB_X[v]) labMove(v, z.dataset.zone); });
   $('lab-card').addEventListener('change', e => {
     const sp = LAB.spec;
-    if (e.target.id === 'lab-y') { sp.y = e.target.value; sp.x = sp.x.filter(c => c !== sp.y); }
     if (e.target.id === 'lab-cov') sp.cov = e.target.value;
     drawLab();
   });
