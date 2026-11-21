@@ -4,7 +4,7 @@ Lời nói bằng tiếng Anh. Ghi chú sân khấu và thao tác trong ngoặc 
 Tổng thời lượng khoảng 7 phút: slide 1–6 khoảng 3,5 phút, demo khoảng 2,5 phút, slide 8–9 khoảng 1 phút.
 Mọi số liệu khớp dashboard bản mới nhất (VCB, năm nền 2025, chi phí vốn giữ nguyên).
 
-Người nói theo ngành: **NH** = Ngân hàng · **TH** = Thuế · **TK** = Toán thống kê · **KHMT** = Khoa học máy tính.
+Người nói: **NH** = Nguyễn Phạm Xuân Dương (Ngân hàng) · **TH** = Đặng Đình Pháp (Thuế) · **TK** = Phạm Huy Hoàng (Toán thống kê) · **KHMT** = Nguyễn Thiện Nhân (Khoa học máy tính).
 
 Chuẩn bị trước khi lên:
 - Mở sẵn https://w-nhannt.github.io/vietleap26/#en, ngân hàng VCB, năm 2025, kịch bản Base, mục tiêu 90%, mức 25 bp.

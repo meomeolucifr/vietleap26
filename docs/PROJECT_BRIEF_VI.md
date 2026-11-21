@@ -179,9 +179,9 @@ Mô hình phụ:
 
 ## 7. Phân công công việc theo ngành học
 
-Điền tên từng thành viên vào cột "Thành viên" cho đúng ngành. Mỗi người phụ trách một phần chính và trình bày các slide tương ứng.
+Mỗi người phụ trách một phần chính và trình bày các slide tương ứng.
 
-### Ngân hàng: [Thành viên]
+### Ngân hàng: Nguyễn Phạm Xuân Dương
 **Vai trò:** chủ đề và nghiệp vụ; bảo đảm bài toán đúng với cách ALCO làm việc.
 - Chọn đề tài và câu hỏi quyết định; viết đề xuất ALCO cho VCB (25/50 bp, mục tiêu giữ 90% LNST).
 - Xác định ba ngưỡng an toàn và căn cứ: CAR 8% theo Thông tư 41, ý nghĩa của mục tiêu 90% và của khả năng trang trải dự phòng.
@@ -190,7 +190,7 @@ Mô hình phụ:
 - Diễn giải kết quả so sánh 25 ngân hàng (vì sao BID, STB, EIB trượt) và hàm ý chính sách.
 - **Trình bày:** slide 1–3 (mở đầu, tình huống, bốn chỉ số an toàn) và slide 8.
 
-### Thuế: [Thành viên]
+### Thuế: Đặng Đình Pháp
 **Vai trò:** dòng tiền sau thuế và câu hỏi "ai gánh".
 - Xây chuỗi LNTT → thuế TNDN 20% → LNST; kiểm tra thuế suất hiệu dụng của từng ngân hàng so với 20%.
 - Tính phân bổ chi phí của khoản giảm lãi: cổ đông khoảng 2.133 tỷ, ngân sách khoảng 533 tỷ (VCB, 25 bp).
@@ -199,7 +199,7 @@ Mô hình phụ:
 - Phụ trách tài liệu Word: các phần Kết quả và Giả định, hạn chế; theo dõi lịch sử chỉnh sửa.
 - **Trình bày:** slide 5 (25 bp nghĩa là gì) và slide 6 (các giới hạn).
 
-### Toán thống kê: [Thành viên]
+### Toán thống kê: Phạm Huy Hoàng
 **Vai trò:** dữ liệu và kinh tế lượng; bảo đảm con số đáng tin.
 - Thiết kế mẫu (25 ngân hàng × 10 năm) và quy tắc loại; xử lý ngoại lai (cắt 1% mỗi đuôi).
 - Đối chiếu CAR tự tính với CAR công bố; quy tắc thay thế lỗi nguồn và lấp năm thiếu từ 2020.
@@ -208,7 +208,7 @@ Mô hình phụ:
 - Kiểm định VIF; kiểm định các giả thuyết bổ sung (tín dụng, nợ xấu, NIM theo vĩ mô).
 - **Trình bày:** slide 4 (hai lớp mô hình); trả lời câu hỏi về phương pháp.
 
-### Khoa học máy tính: [Thành viên]
+### Khoa học máy tính: Nguyễn Thiện Nhân
 **Vai trò:** sản phẩm và hạ tầng.
 - Viết pipeline Python: gộp file FiinPro-X thành panel, tính biến, xuất dữ liệu cho dashboard, chạy hồi quy.
 - Xây dashboard HTML/JS: mô phỏng, biểu đồ, so sánh 25 ngân hàng, bản tóm tắt ALCO, song ngữ, phần tự chạy hồi quy kéo-thả.
