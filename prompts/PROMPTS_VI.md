@@ -137,18 +137,13 @@ Tab Mô phỏng:
   ngân hàng × năm tô theo thứ hạng, bảng theo năm bấm để xem năm đó.
 
 Tab Phương pháp & dữ liệu:
-- Bảng "Mô hình đề xuất": mắt xích từ mức giảm đến chỉ số an toàn, mô hình kiểm chứng, ý nghĩa.
-- Bốn thẻ mô hình kiểm chứng (pass_bank, roa_det, car_resp, llp_macro): biểu đồ added-variable (độ dốc = hệ số),
-  đường giả định của mô phỏng, câu kết luận tự tính, nhãn ý nghĩa thống kê; cả bốn cố định giai đoạn
-  2020–2025, không có nút tuỳ chọn. Thẻ dự phòng vẽ GDP và chi phí dự phòng theo năm (hai biểu đồ nhỏ, không trục kép).
-- Dưới mỗi thẻ mô hình có một câu "Cách đọc" bằng lời thường.
 - "Tự chạy hồi quy": khay chứa đủ các chỉ số trên BCTC, người dùng kéo (hoặc bấm) vào ô biến phụ thuộc (một chỉ số) và
   ô biến độc lập (nhiều chỉ số). Biến phụ thuộc thường là một chỉ số an toàn (ROA, CAR, NIM, khả năng trang trải dự phòng), biến giải
   thích là các chỉ số tài chính trên BCTC (ROA, ROE, NIM, CAR, khả năng trang trải dự phòng, CIR, nợ xấu, VCSH/TTS, quy
   mô, cho vay/TTS, LDR, tăng trưởng dư nợ, tỷ trọng thu nhập ngoài lãi) khác biến phụ thuộc, không dùng biến vĩ mô; cố
   định FE ngân hàng và bỏ 1% đuôi, SE Driscoll-Kraay hoặc robust; bảng hệ số có cột VIF (trên biến đã khử hiệu ứng
   ngân hàng; đánh dấu trên 5, cảnh báo trên 10), thanh CI, mỗi hệ số một câu diễn giải, và biểu đồ.
-- Bảng biến (công thức, dòng BCTC, nguồn Cục Thống kê/NHNN), số liệu nền truy về dòng nguồn, công thức, giả định và hạn chế, thuật ngữ (rê chuột chữ gạch chấm để xem giải thích).
+- Bảng biến chỉ gồm các biến có nguồn trực tiếp (dòng BCTC hoặc Cục Thống kê/NHNN), bỏ các dòng chỉ tính từ dòng khác, số liệu nền truy về dòng nguồn, công thức, giả định và hạn chế, thuật ngữ (rê chuột chữ gạch chấm để xem giải thích).
 Chữ viết thành câu tự nhiên, gọn; giải thích kỹ thuật để trong tooltip. Chạy thử trên trình duyệt, chụp màn hình
 kiểm tra nhãn đè, tràn, lỗi console.
 ```

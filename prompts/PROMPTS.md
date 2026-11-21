@@ -149,12 +149,6 @@ Simulator tab:
   coloured by rank, and a per-year table where clicking a row opens that year.
 
 Method & data tab:
-- "Proposed model" table: each link from the rate cut to a safety indicator, the model that tests it, what it means.
-- Four model cards (pass_bank, roa_det, car_resp, llp_macro): added-variable plot (slope = coefficient), the
-  simulator's assumption line, an auto-generated takeaway, a significance badge; all four fixed to 2020–2025
-  with no option buttons. The provision card shows GDP and
-  provisions by year (two small charts, no dual axis).
-- Under each model card, one plain-language "How to read" sentence.
 - "Run your own regression": a tray of all financial-statement ratios that the user drags (or clicks) into a
   dependent-variable box (one ratio) and a regressor box (several). Typical dependent variable: a safety indicator (ROA,
   CAR, NIM, provision coverage); regressors
@@ -162,7 +156,7 @@ Method & data tab:
   LDR, loan growth, non-interest income share) other than the dependent variable, no macro variables; bank FE and 1%
   trimming fixed, Driscoll-Kraay or robust SE; coefficient table with a VIF column (bank-demeaned regressors; mark
   above 5, warn above 10), CI bars, one sentence per coefficient, and a chart.
-- Variables table (formula, statement line, GSO/SBV source), source data traced to statement lines, formulas, assumptions and limitations, glossary (hover dotted terms for definitions).
+- Variables table listing only items with a direct source (statement line or GSO/SBV), no rows that are merely computed from other rows, source data traced to statement lines, formulas, assumptions and limitations, glossary (hover dotted terms for definitions).
 Write text as short natural sentences; keep technical detail in tooltips. Test in a browser and take screenshots to
 check for overlapping labels, overflow and console errors.
 ```
