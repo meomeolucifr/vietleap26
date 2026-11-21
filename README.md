@@ -4,7 +4,7 @@ VietLeap Hackathon 2026, From Data to Decision.
 
 Dashboard giúp ALCO/CFO ngân hàng đánh giá: giảm lãi suất cho vay s điểm cơ bản (10 bp = 0,1%) thì lợi nhuận sau thuế, CAR và khả năng trang trải chi phí dự phòng có còn đảm bảo không, và người vay tiết kiệm được bao nhiêu. Mẫu: 25 ngân hàng thương mại niêm yết, báo cáo tài chính hợp nhất năm 2016–2025 (FiinPro-X), cùng số liệu vĩ mô từ FiinX. Song ngữ Việt/Anh (thêm `?lang=en` vào link để mở bản tiếng Anh).
 
-Phương pháp, mô hình, biến và nguồn dữ liệu: [docs/PHUONG_PHAP.md](docs/PHUONG_PHAP.md).
+Phương pháp, mô hình, biến và nguồn dữ liệu: [docs/PHUONG_PHAP.md](docs/PHUONG_PHAP.md). Tài liệu nộp bài (Word, bật theo dõi thay đổi): [docs/TeamName_Documentation.docx](docs/TeamName_Documentation.docx).
 
 ## Cấu trúc
 
