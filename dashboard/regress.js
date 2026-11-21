@@ -89,7 +89,7 @@
     const ci = Object.fromEntries(panel.cols.map((c, i) => [c, i]));
     const cols = [spec.y, ...spec.x];
     if (!spec.x.length) throw new Error('no regressors');
-    let rows = panel.rows.filter(r => (!spec.pat_pos || r[ci.pat_pos] === 1) && cols.every(c => r[ci[c]] != null && isFinite(r[ci[c]])));
+    let rows = panel.rows.filter(r => (!spec.pat_pos || r[ci.pat_pos] === 1) && (!spec.from_year || r[ci.year] >= spec.from_year) && cols.every(c => r[ci[c]] != null && isFinite(r[ci[c]])));
     if (spec.trim) {   // như trim_tails của Python: phân vị tính trên mẫu sau khi bỏ dòng thiếu, giữ dòng nằm trong khoảng ở mọi biến
       const p = spec.trim / 100, bounds = cols.map(c => { const s = rows.map(r => r[ci[c]]).sort((a, b) => a - b); return [quantile(s, p), quantile(s, 1 - p)]; });
       rows = rows.filter(r => cols.every((c, j) => r[ci[c]] >= bounds[j][0] && r[ci[c]] <= bounds[j][1]));

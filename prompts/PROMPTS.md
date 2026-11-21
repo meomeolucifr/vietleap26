@@ -151,12 +151,14 @@ Simulator tab:
 Method & data tab:
 - "Proposed model" table: each link from the rate cut to a safety indicator, the model that tests it, what it means.
 - Four model cards (pass_bank, roa_det, car_resp, llp_macro): added-variable plot (slope = coefficient), the
-  simulator's assumption line, an auto-generated takeaway, a significance badge; buttons to switch year FE,
-  trimming 0/1/5% and clustered/Driscoll-Kraay SE that re-estimate instantly. The provision card shows GDP and
+  simulator's assumption line, an auto-generated takeaway, a significance badge; all four fixed to 2020–2025
+  with no option buttons. The provision card shows GDP and
   provisions by year (two small charts, no dual axis).
 - Under each model card, one plain-language "How to read" sentence.
 - "Run your own regression": dependent variable is one safety indicator (ROA, CAR, NIM, provision coverage), regressors
-  are GDP growth, average CPI and system credit growth; bank FE and 1% trimming fixed, Driscoll-Kraay or robust SE;
+  are GDP growth, average CPI and system credit growth plus financial-statement ratios (ROA, ROE, NIM, CAR, CIR,
+  NPL, equity/assets, size, loans/assets, LDR, loan growth, non-interest income share) other than the dependent
+  variable; bank FE and 1% trimming fixed, Driscoll-Kraay or robust SE;
   coefficient table with CI bars, one sentence per coefficient, and a chart.
 - Variables table (formula, statement line, GSO/SBV source), source data traced to statement lines, formulas, assumptions and limitations, glossary (hover dotted terms for definitions).
 Write text as short natural sentences; keep technical detail in tooltips. Test in a browser and take screenshots to
@@ -201,6 +203,6 @@ proposal), record of AI use, division of work, version history.
 ```
 Write an English pitch script of about 6 minutes for the judges (international academics, FiinGroup) and students.
 Follow five questions: why banks cut rates, who pays, what "safe" means and why 90%, why the numbers can be trusted
-(a coffee-shop example for φ 39% vs 98%), and how much to cut. Include a three-step demo, slide titles that are
+(a coffee-shop example for φ 36% vs 98%), and how much to cut. Include a three-step demo, slide titles that are
 conclusions, a Q&A bank with one-sentence answers, and a Vietnamese summary.
 ```

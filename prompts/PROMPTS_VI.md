@@ -139,11 +139,13 @@ Tab Mô phỏng:
 Tab Phương pháp & dữ liệu:
 - Bảng "Mô hình đề xuất": mắt xích từ mức giảm đến chỉ số an toàn, mô hình kiểm chứng, ý nghĩa.
 - Bốn thẻ mô hình kiểm chứng (pass_bank, roa_det, car_resp, llp_macro): biểu đồ added-variable (độ dốc = hệ số),
-  đường giả định của mô phỏng, câu kết luận tự tính, nhãn ý nghĩa thống kê; nút bật/tắt FE năm, bỏ đuôi 0/1/5%,
-  SE cụm/D-K tính lại ngay. Thẻ dự phòng vẽ GDP và chi phí dự phòng theo năm (hai biểu đồ nhỏ, không trục kép).
+  đường giả định của mô phỏng, câu kết luận tự tính, nhãn ý nghĩa thống kê; cả bốn cố định giai đoạn
+  2020–2025, không có nút tuỳ chọn. Thẻ dự phòng vẽ GDP và chi phí dự phòng theo năm (hai biểu đồ nhỏ, không trục kép).
 - Dưới mỗi thẻ mô hình có một câu "Cách đọc" bằng lời thường.
 - "Tự chạy hồi quy": biến phụ thuộc là một chỉ số an toàn (ROA, CAR, NIM, khả năng trang trải dự phòng), biến giải
-  thích là tăng trưởng GDP, CPI bình quân, tăng trưởng tín dụng toàn hệ thống; cố định FE ngân hàng và bỏ 1% đuôi,
+  thích là tăng trưởng GDP, CPI bình quân, tăng trưởng tín dụng toàn hệ thống cùng các chỉ số tài chính trên BCTC (ROA,
+  ROE, NIM, CAR, CIR, nợ xấu, VCSH/TTS, quy mô, cho vay/TTS, LDR, tăng trưởng dư nợ, tỷ trọng thu nhập ngoài lãi) khác
+  biến phụ thuộc; cố định FE ngân hàng và bỏ 1% đuôi,
   SE Driscoll-Kraay hoặc robust; bảng hệ số có thanh CI, mỗi hệ số một câu diễn giải, và biểu đồ.
 - Bảng biến (công thức, dòng BCTC, nguồn Cục Thống kê/NHNN), số liệu nền truy về dòng nguồn, công thức, giả định và hạn chế, thuật ngữ (rê chuột chữ gạch chấm để xem giải thích).
 Chữ viết thành câu tự nhiên, gọn; giải thích kỹ thuật để trong tooltip. Chạy thử trên trình duyệt, chụp màn hình
@@ -188,6 +190,6 @@ phân công, nhật ký phiên bản.
 ```
 Viết kịch bản thuyết trình tiếng Anh khoảng 6 phút cho giám khảo (học thuật quốc tế, FiinGroup) và sinh viên.
 Đi theo 5 câu hỏi: vì sao ngân hàng giảm lãi, ai trả tiền, thế nào là an toàn và vì sao 90%, vì sao tin được con số
-(ví dụ quán cà phê cho φ 39% so với 98%), nên giảm bao nhiêu. Có demo 3 thao tác, slide tiêu đề là câu kết luận,
+(ví dụ quán cà phê cho φ 36% so với 98%), nên giảm bao nhiêu. Có demo 3 thao tác, slide tiêu đề là câu kết luận,
 ngân hàng câu hỏi Q&A kèm câu trả lời một câu, tóm tắt tiếng Việt.
 ```

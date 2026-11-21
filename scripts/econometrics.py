@@ -35,10 +35,12 @@ import build_dataset as b
 OUT = os.path.join(b.ROOT, 'dashboard', 'econ.js')
 PANEL_OUT = os.path.join(b.ROOT, 'dashboard', 'panel.js')
 # biến thêm cho người dùng tự chọn trên dashboard, ngoài các biến đã dùng trong MODELS
-PANEL_EXTRA = ['cost', 'yield', 'roe', 'ldr', 'nonii', 'd_nim', 'd_roa', 'credit_growth', 'car', 'cov', 'nim', 'roa']
+PANEL_EXTRA = ['cost', 'yield', 'roe', 'ldr', 'nonii', 'd_nim', 'd_roa', 'credit_growth', 'car', 'cov', 'nim', 'roa',
+               'cir', 'npl', 'cap', 'size', 'loans_ta', 'loang']
 RWA_TA = 0.82  # tỷ lệ RWA / tổng tài sản trung vị; cập nhật từ dữ liệu trong __main__
 # 4 mô hình chính, mỗi mô hình kiểm chứng một chỉ số an toàn trên dashboard; dashboard vẽ biểu đồ cho từng cái
 MAIN = ['pass_bank', 'roa_det', 'car_resp', 'llp_macro']
+MAIN_FROM = 2020  # 4 mô hình chính dùng chung giai đoạn 2020–2025 (CAR chỉ có từ 2020, mọi ngân hàng theo Thông tư 41)
 
 LABELS = {**VARS, 'd_yield': 'Δ Lợi suất tài sản', 'd_cost': 'Δ Chi phí vốn', 'd_nim': 'Δ NIM', 'd_roa': 'Δ ROA',
           'ldr': 'LDR', 'const': 'Hằng số', 'llp': 'Chi phí DP / dư nợ BQ', 'loang': 'Tăng trưởng dư nợ',
@@ -176,6 +178,8 @@ def trim_tails(d, cols, pct):
 def fit(df, m):
     cols = [m['y']] + m['x']
     d = df[m['sample'](df)] if 'sample' in m else df
+    if m['id'] in MAIN:
+        d = d[d['year'] >= MAIN_FROM]
     d = d[['bank', 'year'] + cols].replace([np.inf, -np.inf], np.nan).dropna()
     d = trim_tails(d, cols, m.get('trim', 0)).set_index(['bank', 'year'])
     rhs = ' + '.join(['1'] + m['x'] + (['EntityEffects'] if m['entity'] else []) + (['TimeEffects'] if m['time'] else []))
@@ -255,7 +259,7 @@ if __name__ == '__main__':
                  'labels': {c: LABELS.get(c, c) for c in cols}, 'labels_en': {c: LABELS_EN.get(c, c) for c in cols},
                  'macro': [c for c in cols if c in MACRO_COLS],
                  'presets': [{k: m.get(k) for k in ('id', 'title', 'title_en', 'y', 'x', 'entity', 'time', 'cov', 'alt_cov', 'trim')}
-                             | {'pat_pos': 'sample' in m} for m in MODELS]}
+                             | {'pat_pos': 'sample' in m, 'from_year': MAIN_FROM if m['id'] in MAIN else None} for m in MODELS]}
     with open(PANEL_OUT, 'w', encoding='utf-8') as f:
         f.write('// Sinh tự động bởi scripts/econometrics.py - không sửa tay\n')
         f.write('window.PANEL = ' + json.dumps(panel_out, ensure_ascii=False, separators=(',', ':')) + ';\n')
