@@ -12,7 +12,7 @@ The prompts the team used with an AI assistant (Claude, through Claude Code in V
 Our team is competing in VietLeap Hackathon 2026 "From Data to Decision". Scoring: Product 40, Presentation 40,
 Teamwork 20. We must submit: the product, a document with edit history (research problem, data and limitations,
 results, record of AI use, division of work), open-source code, the AI prompts, and an English presentation with a
-Vietnamese summary. Repo: https://github.com/meomeolucifr/vietleap26 (code, data, product, documents, prompts).
+Vietnamese summary. Repo: https://github.com/w-nhannt/vietleap26 (code, data, product, documents, prompts).
 
 Topic: simulate a bank cutting its lending rate by s basis points (10 bp = 0.1%) and show the effect on
 (1) % change in profit after tax, (2) how much borrowers save, (3) provision coverage, (4) CAR.

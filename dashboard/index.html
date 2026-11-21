@@ -212,9 +212,29 @@
   .lab-out td:first-child, .lab-out th:first-child { text-align: left; }
   .lab-warn { color: var(--warn); font-size: 12.5px; margin-top: 8px; }
   .cmp-take { margin: 0 0 12px; font-size: 13.5px; font-weight: 500; color: var(--ink); max-width: 760px; }
-  .rec { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; margin-top: 10px; padding: 9px 14px; border-radius: var(--r-md);
-         background: var(--accent-soft); max-width: 900px; font-size: 13.5px; line-height: 1.45; }
-  .rec b.big { font-size: 15px; color: var(--accent); }
+  .rec { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; padding: 7px 14px; border-radius: var(--r-md);
+         background: var(--accent-soft); font-size: 13px; line-height: 1.45; }
+  .rec b.big { font-size: 14px; color: var(--accent); }
+  /* đầu trang gọn: chữ bên trái, bộ chọn bên phải cùng hàng; dải khuyến nghị trải ngang bên dưới */
+  .pagehead { display: grid !important; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 24px; align-items: start !important; margin: 2px 0 12px !important; }
+  .pagehead h1 { font-size: 22px !important; margin: 0 0 3px !important; max-width: none !important; }
+  .pagehead #subtitle { font-size: 13.5px; max-width: 900px; }
+  .pagehead .brief { margin-bottom: 4px !important; font-size: 12px !important; }
+  .pickers { flex-wrap: wrap; justify-content: flex-end; }
+  @media (max-width: 980px) { .pagehead { grid-template-columns: 1fr; } .pickers { justify-content: flex-start; } }
+  /* khung điều chỉnh gọn */
+  .ctl-card { margin-top: 14px; padding: 14px 22px; }
+  .ctl-main { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 24px; align-items: center; }
+  .ctl-main .bp-big input { font-size: 30px; width: 84px; }
+  .ctl-opts { display: flex; flex-wrap: wrap; gap: 8px 28px; align-items: center; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
+  .ctl-opts .opt { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
+  .ctl-opts .lbl { font-size: 13px; font-weight: 600; }
+  .ctl-opts .hint { color: var(--muted); font-size: 12.5px; }
+  .assump-box { margin-top: 10px; font-size: 12.5px; color: var(--ink-2); }
+  .assump-box summary { cursor: pointer; padding: 2px 0; }
+  .assump-box summary b { color: var(--ink); font-weight: 600; }
+  .assump-box[open] .assump { margin-top: 10px; }
+  @media (max-width: 720px) { .ctl-main { grid-template-columns: 1fr; } }
   .rec button, .memo-actions button { border: 1px solid var(--accent); background: var(--card); color: var(--accent); border-radius: 999px; padding: 3px 12px; font-size: 12.5px; cursor: pointer; font-weight: 600; }
   .memo-btn { border: 0; background: var(--hero); color: var(--hero-ink); border-radius: 999px; padding: 8px 16px; font-weight: 600; cursor: pointer; }
   .memo-wrap { position: fixed; inset: 0; z-index: 40; background: rgba(10, 18, 32, .45); display: grid; place-items: center; padding: 20px; }
@@ -283,56 +303,52 @@
   </nav>
 
   <header class="pagehead">
-    <div>
+    <div class="ph-text">
       <p class="brief" data-t="brief"></p>
       <h1 id="title">…</h1>
       <p id="subtitle"></p>
-      <div class="rec" id="rec" hidden></div>
     </div>
     <div class="pickers">
       <button class="memo-btn" id="memo-btn" type="button" data-t="memoBtn"></button>
       <div class="pill-select"><label for="bank" data-t="bank"></label><select id="bank"></select></div>
       <div class="pill-select"><label for="year" data-t="year"></label><select id="year"></select></div>
     </div>
+    <div class="rec" id="rec" hidden></div>
   </header>
 
   <!-- ===================== MÔ PHỎNG ===================== -->
   <main id="tab-sim">
-    <section class="card" id="controls">
-      <div class="control">
-        <div>
-          <div class="bp-big"><input id="bp" type="number" min="0" max="500" step="1" value="25">
-            <span class="unit" id="bp-unit"></span><span class="eq num" id="bp-pct"></span></div>
-        </div>
+    <!-- số liệu trước, khung điều chỉnh sau -->
+    <section class="kpis">
+      <article class="card kpi hero" id="kpi-save"></article>
+      <article class="card kpi" id="kpi-pat"></article>
+      <article class="card kpi" id="kpi-cov"></article>
+      <article class="card kpi" id="kpi-car"></article>
+    </section>
+
+    <section class="card ctl-card" id="controls">
+      <div class="ctl-main">
+        <div class="bp-big"><input id="bp" type="number" min="0" max="500" step="1" value="25">
+          <span class="unit" id="bp-unit"></span><span class="eq num" id="bp-pct"></span></div>
         <div class="slider-row">
           <input id="bpRange" type="range" min="0" max="300" step="1" value="25">
           <div class="chips" id="chips"></div>
         </div>
       </div>
-      <div class="assump">
-        <div class="field"><label for="alpha" data-th="alpha"></label><div class="in"><input id="alpha" type="number" min="0" max="100" value="100"><span class="u">%</span></div></div>
-        <div class="field"><label for="months" data-th="months"></label><div class="in"><input id="months" type="number" min="0" max="12" step="0.1" value="12"><span class="u" data-t="monthsU"></span></div>
-          <div class="presets" id="timing-presets"></div><div class="u" id="timing-note" style="margin-top:4px"></div></div>
-        <div class="field hl"><label for="phi" data-th="phi"></label><div class="in"><input id="phi" type="number" min="0" max="100" value="40"><span class="u">%</span></div>
-          <div class="presets" id="phi-presets"></div></div>
+      <div class="ctl-opts">
+        <div class="opt" id="q-row"><span class="lbl" data-th="q"></span><div class="seg" role="group" id="q-seg"></div></div>
+        <div class="opt" id="macro-row" hidden><span class="lbl" data-th="macro"></span><div class="seg" role="group" id="macro-seg"></div><span class="hint" id="macro-hint"></span></div>
       </div>
-      <div class="macro-row" id="q-row">
-        <span class="lbl" data-th="q"></span>
-        <div class="seg" role="group" id="q-seg"></div>
-        <span class="hint" data-t="qHint"></span>
-      </div>
-      <div class="macro-row" id="macro-row" hidden style="border-top:0;padding-top:0;margin-top:10px">
-        <span class="lbl" data-th="macro"></span>
-        <div class="seg" role="group" id="macro-seg"></div>
-        <span class="hint" id="macro-hint"></span>
-      </div>
-    </section>
-
-    <section class="kpis" style="margin-top:16px">
-      <article class="card kpi hero" id="kpi-save"></article>
-      <article class="card kpi" id="kpi-pat"></article>
-      <article class="card kpi" id="kpi-cov"></article>
-      <article class="card kpi" id="kpi-car"></article>
+      <details class="assump-box" id="assump-box">
+        <summary><b data-t="assumpTitle"></b> <span id="assump-sum"></span></summary>
+        <div class="assump">
+          <div class="field"><label for="alpha" data-th="alpha"></label><div class="in"><input id="alpha" type="number" min="0" max="100" value="100"><span class="u">%</span></div></div>
+          <div class="field"><label for="months" data-th="months"></label><div class="in"><input id="months" type="number" min="0" max="12" step="0.1" value="12"><span class="u" data-t="monthsU"></span></div>
+            <div class="presets" id="timing-presets"></div><div class="u" id="timing-note" style="margin-top:4px"></div></div>
+          <div class="field hl"><label for="phi" data-th="phi"></label><div class="in"><input id="phi" type="number" min="0" max="100" value="40"><span class="u">%</span></div>
+            <div class="presets" id="phi-presets"></div></div>
+        </div>
+      </details>
     </section>
 
     <article class="card" style="margin-top:16px">
@@ -490,6 +506,7 @@
     labDesc: ['Chọn một mô hình có sẵn hoặc tự chọn biến; kết quả tính lại ngay trên trình duyệt với dữ liệu {n} ngân hàng × 10 năm. Cách tính giống hệt mã Python của nhóm (linearmodels), đã đối chiếu khớp đến 8 chữ số với cả 6 mô hình đề xuất.',
               'Pick a ready-made model or choose your own variables; results are re-estimated in the browser on {n} banks × 10 years. The method is identical to the team\'s Python code (linearmodels) and matches all 6 proposed models to 8 digits.'],
     miniBp: ['Mức giảm', 'Rate cut'],
+    assumpTitle: ['Giả định', 'Assumptions'],
     memoBtn: ['Tóm tắt cho ALCO', 'Summary for ALCO'],
     qHint: ['Do ban lãnh đạo chọn, không phải quy định. Đề xuất ALCO dùng 90%.', 'Set by management, not by regulation. The ALCO proposal uses 90%.'], miniPhi: ['Chi phí vốn bù', 'Funding offset'],
     bank: ['Ngân hàng', 'Bank'], year: ['Năm nền', 'Base year'],
@@ -516,7 +533,7 @@
           'Share of the cut recovered because the bank pays depositors less. Default from data: when one bank moves alone, about {phi} is recovered ("Proposed model" table, Method tab). 0% = worst case; close to 100% only in a market-wide easing.'],
     tax: ['Thuế suất TNDN', 'Corporate tax rate', 'Thuế thu nhập doanh nghiệp, 20% ở Việt Nam. Cố định trong mô phỏng.', 'Corporate income tax, 20% in Vietnam. Fixed in the simulator.'],
     k: ['LNST giữ lại vào vốn', 'Profit retained in capital', 'Phần lợi nhuận không chia cổ tức, được cộng vào vốn tự có để tính CAR. Cố định 100% (thận trọng: toàn bộ phần LNST giảm làm giảm vốn).', 'Share of profit not paid out, added to regulatory capital for CAR. Fixed at 100% (conservative: the whole profit loss reduces capital).'],
-    q: ['Mục tiêu giữ LNST', 'Profit retention target', 'Tỷ lệ LNST năm nền ngân hàng muốn giữ lại sau khi giảm lãi (đề xuất ALCO: 90%). Cố định 90% trong mô phỏng.', 'Share of base-year profit the bank wants to keep after the cut (ALCO proposal: 90%). Fixed at 90% in the simulator.'],
+    q: ['Mục tiêu giữ LNST', 'Profit retention target', 'Tỷ lệ LNST năm nền ngân hàng muốn giữ lại sau khi giảm lãi (đề xuất ALCO: 90%). Do ban lãnh đạo chọn, không phải quy định.', 'Share of base-year profit the bank wants to keep after the cut (ALCO proposal: 90%). Set by management, not by regulation.'],
     macro: ['Kịch bản vĩ mô', 'Macro scenario', 'Kịch bản tăng trưởng kinh tế, đi vào mô phỏng qua chi phí dự phòng (mô hình panel, tab Phương pháp).', 'Economic-growth scenario; enters the simulation through provisions (panel model, Method tab).'],
     nim: ['NIM', 'NIM', 'Biên lãi ròng: thu nhập lãi thuần / tổng tài sản bình quân.', 'Net interest margin: net interest income / average total assets.'],
     ppop: ['LN trước dự phòng', 'Pre-provision profit', 'Lợi nhuận thuần từ hoạt động kinh doanh trước chi phí dự phòng rủi ro tín dụng.', 'Operating profit before credit-loss provisions.'],
@@ -1553,6 +1570,8 @@
     $('timing-presets').innerHTML = `<button data-timing="reprice" aria-pressed="${S.timing === 'reprice'}" data-tip="${esc(L('Tính từ bảng kỳ định lại lãi suất trong thuyết minh BCTC', 'From the repricing table in the notes to the statements'))}">${L('Theo BCTC', 'From statements')}</button>` +
       `<button data-timing="12" aria-pressed="${S.timing === 'manual' && S.months === 12}" data-tip="${esc(L('Toàn bộ dư nợ đổi lãi ngay: cận trên của tác động', 'All loans reprice at once: upper bound'))}">${L('12 tháng (cận trên)', '12 months (upper bound)')}</button>`;
     $('timing-note').textContent = S.timing === 'reprice' && r && !r.rp_ok ? L('Năm này thiếu bảng kỳ định lại, đang dùng số tháng nhập tay', 'No repricing table this year; using manual months') : '';
+    $('assump-sum').textContent = '· ' + L(`Dư nợ được giảm lãi ${f0.format(S.alpha * 100)}% · đổi lãi ${rpOn ? `theo BCTC (≈ ${f1.format(+$('months').value)} tháng)` : `trong ${f1.format(S.months)} tháng`} · chi phí vốn bù ${pct(S.phi, 0)} · bấm để chỉnh`,
+                                                     `Loans repriced ${f0.format(S.alpha * 100)}% · repricing ${rpOn ? `from statements (≈ ${f1.format(+$('months').value)} months)` : `within ${f1.format(S.months)} months`} · funding offset ${pct(S.phi, 0)} · click to edit`);
     $('q-seg').innerHTML = [0.85, 0.9, 0.95].map(q => `<button data-q="${q}" aria-pressed="${Math.abs(S.q - q) < 1e-9}">${f0.format(q * 100)}%</button>`).join('');
     $('bp-pct').textContent = '= ' + f2.format(S.bp / 100) + L(' điểm %', ' pp');
     document.querySelectorAll('#chips .chip, #chips2 .chip').forEach(c => c.setAttribute('aria-pressed', +c.dataset.bp === S.bp));

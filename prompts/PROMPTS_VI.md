@@ -10,7 +10,7 @@ Các prompt nhóm dùng với trợ lý AI (Claude, qua Claude Code trong VS Cod
 Nhóm mình thi VietLeap Hackathon 2026 "From Data to Decision". Chấm: Sản phẩm 40, Thuyết trình 40, Làm việc nhóm 20.
 Nộp: sản phẩm, tài liệu có lịch sử chỉnh sửa (vấn đề nghiên cứu, dữ liệu và hạn chế, kết quả, ghi nhận dùng AI,
 phân công), mã nguồn mở, AI prompts, thuyết trình tiếng Anh kèm tóm tắt tiếng Việt.
-Repo: https://github.com/meomeolucifr/vietleap26 (chứa code, data, sản phẩm, tài liệu, prompts).
+Repo: https://github.com/w-nhannt/vietleap26 (chứa code, data, sản phẩm, tài liệu, prompts).
 
 Đề tài: mô phỏng việc ngân hàng giảm lãi suất cho vay s điểm cơ bản (10 bp = 0,1%) ảnh hưởng thế nào đến
 (1) % thay đổi lợi nhuận sau thuế, (2) số tiền người vay tiết kiệm, (3) khả năng trang trải dự phòng, (4) CAR.

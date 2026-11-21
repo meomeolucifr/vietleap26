@@ -2,7 +2,7 @@
 
 VietLeap Hackathon 2026, From Data to Decision · Team 1 · [Bản tiếng Việt](README_VI.md)
 
-**Live dashboard:** https://meomeolucifr.github.io/vietleap26/ (add `#en` for English, `#vi` for Vietnamese)
+**Live dashboard:** https://w-nhannt.github.io/vietleap26/ (add `#en` for English, `#vi` for Vietnamese)
 
 The dashboard helps a bank's ALCO and CFO decide how far to cut lending rates. For a cut of s basis points (10 bp = 0.1%) it shows how much borrowers save, and whether profit after tax, the capital adequacy ratio (CAR) and provision coverage stay within safe limits. Sample: 25 listed Vietnamese commercial banks, consolidated annual financial statements 2016–2025 (FiinPro-X), with macro data from FiinX.
 
@@ -52,4 +52,4 @@ Note: macro variables (GDP, CPI…) are identical across banks in a year, so yea
 
 ## Deployment
 
-On every push to `main`, GitHub Actions installs the packages, runs `run_pipeline.py` (stops if a data check fails), checks the in-browser regressions against Python, and publishes `dashboard/` to https://meomeolucifr.github.io/vietleap26/. Add or update data and push: the regressions and the dashboard update automatically.
+On every push to `main`, GitHub Actions installs the packages, runs `run_pipeline.py` (stops if a data check fails), checks the in-browser regressions against Python, and publishes `dashboard/` to https://w-nhannt.github.io/vietleap26/. Add or update data and push: the regressions and the dashboard update automatically.

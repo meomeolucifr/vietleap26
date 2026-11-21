@@ -45,4 +45,4 @@ Lưu ý: biến vĩ mô (GDP, CPI…) giống nhau cho mọi ngân hàng trong c
 
 ## Deploy
 
-Mỗi lần push lên nhánh `main`, GitHub Actions cài thư viện, chạy `run_pipeline.py` (dừng nếu kiểm tra dữ liệu không đạt), kiểm tra hồi quy trên trình duyệt khớp Python, rồi đưa thư mục `dashboard/` lên https://meomeolucifr.github.io/vietleap26/. Thêm hoặc sửa dữ liệu rồi push là hồi quy và dashboard tự cập nhật.
+Mỗi lần push lên nhánh `main`, GitHub Actions cài thư viện, chạy `run_pipeline.py` (dừng nếu kiểm tra dữ liệu không đạt), kiểm tra hồi quy trên trình duyệt khớp Python, rồi đưa thư mục `dashboard/` lên https://w-nhannt.github.io/vietleap26/. Thêm hoặc sửa dữ liệu rồi push là hồi quy và dashboard tự cập nhật.
