@@ -1022,11 +1022,9 @@
                                 `In the ${scLabel(scen(S.macro)).toLowerCase()} scenario, ${r.bank} has no room to cut and still keep ${q}% of profit`);
     else t = L(`${r.bank} giảm được tối đa ${f0.format(Math.floor(s.maxBp))} bp mà vẫn giữ ${q}% lợi nhuận`, `${r.bank} can cut lending rates by up to ${f0.format(Math.floor(s.maxBp))} bp and keep ${q}% of profit`) + scQual();
     $('title').textContent = t;
-    const chg = r.pat > 0 ? (s.patChg < 0 ? L('giảm ', 'falls ') : L('tăng ', 'rises ')) + pct(Math.abs(s.patChg)) : L('đổi ', 'changes by ') + sTy(s.pat1 - r.pat) + ' ' + BN();
-    $('subtitle').textContent = L(`Ở mức ${f0.format(S.bp)} bp, người vay tiết kiệm ${ty(s.save)} tỷ đồng mỗi năm, còn lợi nhuận sau thuế ${chg}`,
-                                  `At ${f0.format(S.bp)} bp, borrowers save VND ${ty(s.save)} bn a year and profit after tax ${chg}`) +
-      (s.dProv ? L(` (đã tính kịch bản vĩ mô ${scLabel(scen(S.macro)).toLowerCase()})`, ` (including the ${scLabel(scen(S.macro)).toLowerCase()} macro scenario)`) : '') +
-      L(`. Tính trên báo cáo tài chính hợp nhất ${r.year}.`, `. Based on the ${r.year} consolidated financial statements.`);
+    // số liệu đã có trên các thẻ bên dưới; phụ đề chỉ nói số liệu lấy từ đâu và tính cho khoảng thời gian nào
+    $('subtitle').textContent = L(`Tính trên báo cáo tài chính hợp nhất ${r.year} của ${r.bank}, cho 12 tháng sau khi giảm lãi. Đơn vị tỷ đồng.`,
+                                  `Computed from ${r.bank}'s ${r.year} consolidated financial statements, for the 12 months after the cut. VND bn.`);
   }
 
   // ---------- KPI ----------
