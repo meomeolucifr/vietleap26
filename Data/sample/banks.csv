@@ -1,7 +1,7 @@
 ticker,name,exchange,in_sample,reason
 ACB,ACB,HOSE,1,
 BID,BIDV,HOSE,1,
-BVB,BVBank (Bản Việt),HOSE,1,
+BVB,BVBank (Ban Viet),HOSE,1,
 CTG,VietinBank,HOSE,1,
 EIB,Eximbank,HOSE,1,
 HDB,HDBank,HOSE,1,
@@ -10,7 +10,7 @@ LPB,LPBank,HOSE,1,
 MBB,MBBank,HOSE,1,
 MSB,MSB,HOSE,1,
 NAB,Nam A Bank,HOSE,1,
-OCB,OCB (Phương Đông),HOSE,1,
+OCB,OCB (Orient Commercial Bank),HOSE,1,
 SHB,SHB,HOSE,1,
 SSB,SeABank,HOSE,1,
 STB,Sacombank,HOSE,1,
@@ -21,11 +21,11 @@ VBB,VietBank,HOSE,1,
 VCB,Vietcombank,HOSE,1,
 VIB,VIB,HOSE,1,
 VPB,VPBank,HOSE,1,
-NVB,NCB (Quốc Dân),HNX,1,
+NVB,NCB (National Citizen Bank),HNX,1,
 PGB,PGBank,UPCoM,1,
 SGB,Saigonbank,UPCoM,1,
-ABB,ABBank (An Bình),UPCoM,0,Thiếu báo cáo tài chính năm 2016 trong dữ liệu FiinPro-X (chỉ có 2017–2025)
-AGR,Agribank,OTC,0,Chưa niêm yết (100% vốn nhà nước)
-BaoVietBank,BaoViet Bank,OTC,0,Chưa niêm yết
-BAB,Bac A Bank,HNX,0,Chưa có file dữ liệu trong Data/
-PCB,PVcomBank,UPCoM,0,Chưa có file dữ liệu trong Data/
+ABB,ABBank (An Binh),UPCoM,0,No 2016 financial statements in the FiinPro-X data (2017–2025 only)
+AGR,Agribank,OTC,0,Not listed (100% state-owned)
+BaoVietBank,BaoViet Bank,OTC,0,Not listed
+BAB,Bac A Bank,HNX,0,No data file in Data/
+PCB,PVcomBank,UPCoM,0,No data file in Data/

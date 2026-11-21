@@ -1,6 +1,6 @@
 # Phương pháp: mô phỏng giảm lãi suất cho vay và các chỉ số an toàn ngân hàng
 
-Tài liệu cho nhóm và hội đồng giám khảo. Số liệu cập nhật theo lần chạy `scripts/run_pipeline.py` ngày 20/11/2026; khi dữ liệu đổi, các con số trên dashboard tự cập nhật, còn số trong tài liệu này cần sửa tay.
+Tài liệu cho nhóm và hội đồng giám khảo. [English version](METHODOLOGY.md). Số liệu cập nhật theo lần chạy `scripts/run_pipeline.py` ngày 20/11/2026; khi dữ liệu đổi, các con số trên dashboard tự cập nhật, còn số trong tài liệu này cần sửa tay.
 
 ## 1. Câu hỏi quyết định
 

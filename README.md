@@ -1,48 +1,55 @@
-# Rate Cut Lab: mô phỏng giảm lãi suất cho vay
+# Rate Cut Lab: simulating lending-rate cuts
 
-VietLeap Hackathon 2026, From Data to Decision.
+VietLeap Hackathon 2026, From Data to Decision · Team 1 · [Bản tiếng Việt](README_VI.md)
 
-Dashboard giúp ALCO/CFO ngân hàng đánh giá: giảm lãi suất cho vay s điểm cơ bản (10 bp = 0,1%) thì lợi nhuận sau thuế, CAR và khả năng trang trải chi phí dự phòng có còn đảm bảo không, và người vay tiết kiệm được bao nhiêu. Mẫu: 25 ngân hàng thương mại niêm yết, báo cáo tài chính hợp nhất năm 2016–2025 (FiinPro-X), cùng số liệu vĩ mô từ FiinX. Song ngữ Việt/Anh (thêm `?lang=en` vào link để mở bản tiếng Anh).
+**Live dashboard:** https://meomeolucifr.github.io/vietleap26/ (add `#en` for English, `#vi` for Vietnamese)
 
-Phương pháp, mô hình, biến và nguồn dữ liệu: [docs/PHUONG_PHAP.md](docs/PHUONG_PHAP.md). Tài liệu nộp bài (Word, bật theo dõi thay đổi): [docs/Team1_Documentation.docx](docs/Team1_Documentation.docx) (tiếng Anh), [bản tiếng Việt](docs/Team1_Documentation_VI.docx).
+The dashboard helps a bank's ALCO and CFO decide how far to cut lending rates. For a cut of s basis points (10 bp = 0.1%) it shows how much borrowers save, and whether profit after tax, the capital adequacy ratio (CAR) and provision coverage stay within safe limits. Sample: 25 listed Vietnamese commercial banks, consolidated annual financial statements 2016–2025 (FiinPro-X), with macro data from FiinX.
 
-## Cấu trúc
+- Method, models, variables and data sources: [docs/METHODOLOGY.md](docs/METHODOLOGY.md)
+- Submission document (Word, Track Changes on): [docs/Team1_Documentation.docx](docs/Team1_Documentation.docx) ([Vietnamese version](docs/Team1_Documentation_VI.docx))
+- AI prompts used: [prompts/PROMPTS.md](prompts/PROMPTS.md)
+
+## Repository layout
 
 ```
-Data/                    Báo cáo tài chính thô xuất từ FiinPro-X, mỗi ngân hàng một file
-Data/sample/banks.csv    Mẫu nghiên cứu: 25 ngân hàng, sàn giao dịch, lý do loại các ngân hàng khác
-Data/macro/macro_vn.csv  Vĩ mô năm 2015–2025 lấy từ FiinX (GDP, CPI bình quân, lãi suất huy động, tăng trưởng tín dụng), đơn vị %
+Data/                    FiinPro-X financial statement exports, one file per bank
+Data/sample/banks.csv    Study sample: 25 banks, exchange, reasons for excluding others
+Data/macro/macro_vn.csv  Annual macro data 2015–2025 from FiinX (GDP, average CPI, deposit rate, credit growth), %
 scripts/
-  build_dataset.py       Đọc Data/*.xlsx, gộp thành bảng ngân hàng × năm; --xlsx xuất bảng Excel có công thức
-  export_dashboard_data.py  -> dashboard/data.js      (số liệu nền, tỷ VND)
-  analysis.py            Dựng panel biến (dùng cho econometrics.py); -> dashboard/analysis.js (tương quan, truyền dẫn; dashboard hiện không hiển thị)
-  econometrics.py        -> dashboard/econ.js      (hồi quy panel FE/RE, khai báo trong danh sách MODELS)
-  run_pipeline.py        Chạy tất cả các bước trên rồi kiểm tra đồng nhất thức kế toán
-  test_regress.js        Kiểm tra dashboard/regress.js (hồi quy trên trình duyệt) khớp kết quả Python: node scripts/test_regress.js
-  validate_dataset.py    Đối chiếu bảng gộp với file mẫu (chỉ chạy ở máy local)
-dashboard/               Trang web tĩnh (index.html + 3 file .js sinh tự động). Đây là thứ được deploy
-Output/                  Bảng panel Excel có công thức
-.github/workflows/       Tự chạy pipeline và deploy lên GitHub Pages khi push lên main
+  build_dataset.py       Reads Data/*.xlsx into a bank × year panel; --xlsx writes the Excel panel with formulas
+  export_dashboard_data.py  -> dashboard/data.js   (base figures in VND bn, repricing table)
+  analysis.py            Builds the panel variables used by econometrics.py; -> dashboard/analysis.js (not shown)
+  econometrics.py        -> dashboard/econ.js and dashboard/panel.js (panel FE regressions, listed in MODELS)
+  run_pipeline.py        Runs all steps, then checks accounting identities
+  test_regress.js        Checks that dashboard/regress.js (in-browser regressions) matches Python: node scripts/test_regress.js
+  validate_dataset.py    Compares the merged panel with the template file (local only)
+dashboard/               Static site (index.html, regress.js and generated .js data files). This is what gets deployed
+Output/                  Excel panel with formulas
+docs/                    Methodology and submission documents
+prompts/                 AI prompts
+.github/workflows/       Re-runs the pipeline and deploys to GitHub Pages on every push to main
 ```
 
-## Chạy ở máy
+## Run locally
 
 ```bash
 pip install -r requirements.txt
-python scripts/run_pipeline.py            # sinh lại dashboard/*.js và kiểm tra dữ liệu
-python -m http.server 8000 -d dashboard   # mở http://localhost:8000
+python scripts/run_pipeline.py            # regenerate dashboard/*.js and run the data checks
+node scripts/test_regress.js              # in-browser regressions must match Python
+python -m http.server 8000 -d dashboard   # open http://localhost:8000
 ```
 
-Mở thẳng `dashboard/index.html` bằng trình duyệt cũng chạy được.
+Opening `dashboard/index.html` directly in a browser also works.
 
-## Thêm hoặc sửa mô hình kinh tế lượng
+## Adding or changing a regression model
 
-Sửa danh sách `MODELS` ở đầu [scripts/econometrics.py](scripts/econometrics.py): chọn biến phụ thuộc, biến giải thích, hiệu ứng cố định ngân hàng/năm, loại sai số chuẩn. Chạy lại `python scripts/econometrics.py`; kết quả ghi vào dashboard/econ.js; bảng "Mô hình đề xuất" ở tab Phương pháp đọc các hệ số từ đó (mô hình mới cần thêm một dòng vào hàm `drawModelTable` trong dashboard/index.html). Biến có sẵn nằm trong hàm `panel()` của [scripts/analysis.py](scripts/analysis.py).
+Edit the `MODELS` list at the top of [scripts/econometrics.py](scripts/econometrics.py): dependent variable, regressors, bank/year fixed effects, standard-error type, and the auto-generated takeaway. Re-run `python scripts/econometrics.py`; results go to `dashboard/econ.js`, and the dashboard's "Run your own regression" panel picks up the new model. Available variables are built in `panel()` in [scripts/analysis.py](scripts/analysis.py).
 
-Kịch bản vĩ mô (Thuận lợi / Cơ sở / Bất lợi) khai báo trong `SCENARIOS` của cùng file: mỗi kịch bản là chênh lệch vĩ mô giữa hai năm thật, đi qua mô hình `llp_macro` để ra thay đổi tỷ lệ chi phí dự phòng, rồi dashboard đưa vào mô phỏng.
+Macro scenarios (Favourable / Base / Adverse) are defined in `SCENARIOS` in the same file: each is the macro change between two actual years, passed through the `llp_macro` model to a change in the provision rate, which the simulator then applies.
 
-Lưu ý: biến vĩ mô (GDP, CPI…) giống nhau cho mọi ngân hàng trong cùng năm, nên bị hiệu ứng cố định năm hấp thụ. Mô hình có biến vĩ mô phải đặt `time=False` và nên dùng `cov='kernel'` (Driscoll-Kraay).
+Note: macro variables (GDP, CPI…) are identical across banks in a year, so year fixed effects absorb them. Models with macro variables must set `time=False` and should use `cov='kernel'` (Driscoll-Kraay).
 
-## Deploy
+## Deployment
 
-Mỗi lần push lên nhánh `main`, GitHub Actions cài thư viện, chạy `run_pipeline.py` (dừng nếu kiểm tra dữ liệu không đạt), kiểm tra hồi quy trên trình duyệt khớp Python, rồi đưa thư mục `dashboard/` lên https://meomeolucifr.github.io/vietleap26/. Thêm hoặc sửa dữ liệu rồi push là hồi quy và dashboard tự cập nhật.
+On every push to `main`, GitHub Actions installs the packages, runs `run_pipeline.py` (stops if a data check fails), checks the in-browser regressions against Python, and publishes `dashboard/` to https://meomeolucifr.github.io/vietleap26/. Add or update data and push: the regressions and the dashboard update automatically.
